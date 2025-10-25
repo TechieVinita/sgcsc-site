@@ -1,6 +1,58 @@
 import Hero from '../components/HeroSection';
 
 export default function Home() {
+  const recentStudents = [
+    { name: "Rahul Sharma", img: "https://via.placeholder.com/150", desc: "Joined ADCA course" },
+    { name: "Anjali Verma", img: "https://via.placeholder.com/150", desc: "Joined DCA course" },
+    { name: "Vikram Singh", img: "https://via.placeholder.com/150", desc: "Joined MCA course" },
+    { name: "Pooja Gupta", img: "https://via.placeholder.com/150", desc: "Joined PDCA course" },
+  ];
+
+  const certifiedStudents = [
+    { name: "Rakesh Kumar", img: "https://via.placeholder.com/150", desc: "Certified in ADIT" },
+    { name: "Neha Patel", img: "https://via.placeholder.com/150", desc: "Certified in DOAP" },
+    { name: "Amit Joshi", img: "https://via.placeholder.com/150", desc: "Certified in DSPP" },
+    { name: "Sonia Rao", img: "https://via.placeholder.com/150", desc: "Certified in ADCP" },
+  ];
+
+  const instituteMembers = [
+    { name: "Dr. Ashok Singh", img: "https://via.placeholder.com/150", desc: "Director" },
+    { name: "Mrs. Rekha Sharma", img: "https://via.placeholder.com/150", desc: "Course Coordinator" },
+    { name: "Mr. Manoj Verma", img: "https://via.placeholder.com/150", desc: "Head Trainer" },
+    { name: "Ms. Priya Tiwari", img: "https://via.placeholder.com/150", desc: "Admin Officer" },
+  ];
+
+  const affiliations = [
+    { name: "ABC Institute", img: "https://via.placeholder.com/150", desc: "Partner Institution" },
+    { name: "XYZ University", img: "https://via.placeholder.com/150", desc: "Accredited University" },
+    { name: "LMN Education Board", img: "https://via.placeholder.com/150", desc: "Affiliated Board" },
+    { name: "PQR Academy", img: "https://via.placeholder.com/150", desc: "Collaborating Academy" },
+  ];
+
+  const renderCardSection = (title, data) => (
+    <section className="container py-5">
+      <h3 className="text-center fw-bold mb-4">{title}</h3>
+      <div className="row text-center">
+        {data.map((item, index) => (
+          <div className="col-sm-6 col-md-3 mb-4" key={index}>
+            <div className="card border-0 shadow-sm h-100">
+              <img
+                src={item.img}
+                alt={item.name}
+                className="card-img-top"
+                style={{ borderRadius: "10px", height: "180px", objectFit: "cover" }}
+              />
+              <div className="card-body">
+                <h6 className="fw-semibold">{item.name}</h6>
+                <p className="text-muted small">{item.desc}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
   return (
     <div>
       {/* Hero Section */}
@@ -63,6 +115,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* New Sections with Dummy Images and Text */}
+      {renderCardSection("Recent Join Students", recentStudents)}
+      {renderCardSection("Certified Students", certifiedStudents)}
+      {renderCardSection("Our Institute Members", instituteMembers)}
+      {renderCardSection("Our Affiliations", affiliations)}
     </div>
   );
 }
