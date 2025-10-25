@@ -1,27 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Courses from './pages/Courses';
 import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
 
-function App() {
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import './index.css'; // your own custom styles if any
+
+
+export default function App() {
   return (
     <Router>
-      <nav style={{ marginBottom: '20px' }}>
-        <Link to="/" style={{ marginRight: '10px' }}>Home</Link>
-        <Link to="/courses" style={{ marginRight: '10px' }}>Courses</Link>
-        <Link to="/gallery" style={{ marginRight: '10px' }}>Gallery</Link>
-        <Link to="/contact">Contact</Link>
-      </nav>
-
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/contact" element={<Contact />} />
       </Routes>
+      <Footer />
     </Router>
   );
 }
-
-export default App;
