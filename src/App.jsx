@@ -2,26 +2,50 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import About from './pages/About';
 import Courses from './pages/Courses';
 import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
+import Disclaimer from './pages/Disclaimer';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import CenterLogin from './pages/CenterLogin';
+import FranchiseDetails from './pages/FranchiseDetails';
+import CertificateVerification from './pages/CertificateVerification';
+import ResultVerification from './pages/ResultVerification';
+import FranchiseRegistration from './pages/FranchiseRegistration';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import './index.css'; // your own custom styles if any
-
+import './index.css'; 
 
 export default function App() {
   return (
     <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/courses" element={<Courses />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/contact" element={<Contact />} />
-      </Routes>
-      <Footer />
+      <div className="d-flex flex-column min-vh-100">
+        <Navbar />
+
+        {/* This makes the main content take the remaining vertical space */}
+        <div className="flex-grow-1">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/franchise-details" element={<FranchiseDetails />} />
+            <Route path="/center-login" element={<CenterLogin />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/franchise-details" element={<FranchiseDetails />} />
+            <Route path="/result-verification" element={<ResultVerification />} />
+            <Route path="/franchise-registration" element={<FranchiseRegistration />} />
+            <Route path="/certificate-verification" element={<CertificateVerification />} />
+
+          </Routes>
+        </div>
+
+        <Footer />
+      </div>
     </Router>
   );
 }

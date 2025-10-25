@@ -5,3 +5,16 @@
 .card:hover .position-absolute {
   opacity: 1;
 }
+
+html, body, #root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-grow-1 {
+  flex: 1; /* content area grows to fill remaining space */
+}
