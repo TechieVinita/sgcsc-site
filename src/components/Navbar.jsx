@@ -53,9 +53,9 @@ export default function Navbar() {
                 Our Courses
               </span>
               <ul className="dropdown-menu" aria-labelledby="coursesDropdown">
-                <li><NavLink className="dropdown-item" to="/courses/long-term">Long Term Courses (1 Year)</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/courses/short-term">Short Term Courses (6 Months)</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/courses/basic">Certificate Courses (3 Months)</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/long-term-courses">Long Term Courses (1 Year)</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/short-term-courses">Short Term Courses (6 Months)</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/certificate-courses">Certificate Courses (3 Months)</NavLink></li>
               </ul>
             </li>
 
@@ -74,8 +74,8 @@ export default function Navbar() {
               <ul className="dropdown-menu" aria-labelledby="franchiseDropdown">
                 <li><NavLink className="dropdown-item" to="/franchise-registration">Franchise Registration Online</NavLink></li>
                 <li><NavLink className="dropdown-item" to="/franchise-details">Franchise Details</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/franchise-verification">Franchise Verification</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/study-center-list">Study Center List</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/result-verification">Result Verification</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/study-centers">Study Center List</NavLink></li>
                 <li><NavLink className="dropdown-item" to="/center-login">Center Login</NavLink></li>
               </ul>
             </li>

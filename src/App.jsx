@@ -13,6 +13,22 @@ import FranchiseDetails from './pages/FranchiseDetails';
 import CertificateVerification from './pages/CertificateVerification';
 import ResultVerification from './pages/ResultVerification';
 import FranchiseRegistration from './pages/FranchiseRegistration';
+import StudyCenterList from "./pages/StudyCenterList";
+import EnrollmentVerification from "./pages/EnrollmentVerification";
+import AdmitCard from "./pages/AdmitCard";
+import StudentLogin from "./pages/StudentLogin";
+import LongTermCourses from "./pages/LongTermCourses";
+import ShortTermCourses from "./pages/ShortTermCourses";
+import CertificateCourses from "./pages/CertificateCourses";
+
+
+
+
+
+
+
+
+
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -33,6 +49,7 @@ export default function App() {
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/study-centers" element={<StudyCenterList />} />
             <Route path="/franchise-details" element={<FranchiseDetails />} />
             <Route path="/center-login" element={<CenterLogin />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -40,6 +57,14 @@ export default function App() {
             <Route path="/result-verification" element={<ResultVerification />} />
             <Route path="/franchise-registration" element={<FranchiseRegistration />} />
             <Route path="/certificate-verification" element={<CertificateVerification />} />
+            <Route path="/enrollment-verification" element={<EnrollmentVerification />} />
+            <Route path="/admit-card" element={<AdmitCard />} />
+            <Route path="/student-login" element={<StudentLogin />} />
+            <Route path="/long-term-courses" element={<LongTermCourses />} />
+            <Route path="/short-term-courses" element={<ShortTermCourses />} />
+            <Route path="/certificate-courses" element={<CertificateCourses />} />    
+
+
 
           </Routes>
         </div>
