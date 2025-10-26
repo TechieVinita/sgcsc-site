@@ -12,9 +12,9 @@ export default function Footer() {
             <ul className="list-unstyled">
               <li><a href="/" className="text-light text-decoration-none hover-link">Home</a></li>
               <li><a href="/about" className="text-light text-decoration-none hover-link">About Us</a></li>
-              <li><a href="/courses#long-form-courses" className="text-light text-decoration-none hover-link">Long Term Courses</a></li>
-              <li><a href="/courses#short-form-courses" className="text-light text-decoration-none hover-link">Short Term Courses</a></li>
-              <li><a href="/courses#basic-courses" className="text-light text-decoration-none hover-link">Basic Courses</a></li>
+              <li><a href="/long-term-courses" className="text-light text-decoration-none hover-link">Long Term Courses</a></li>
+              <li><a href="/short-term-courses" className="text-light text-decoration-none hover-link">Short Term Courses</a></li>
+              <li><a href="/certificate-courses" className="text-light text-decoration-none hover-link">Basic Courses</a></li>
             </ul>
           </div>
 
