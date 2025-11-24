@@ -72,11 +72,11 @@ export default function Navbar() {
                 Franchise
               </span>
               <ul className="dropdown-menu" aria-labelledby="franchiseDropdown">
-                <li><NavLink className="dropdown-item" to="/franchise-registration">Franchise Registration Online</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/franchise-details">Franchise Details</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/result-verification">Result Verification</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/study-centers">Study Center List</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/center-login">Center Login</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/franchise-registration">Franchise Registration</NavLink></li>
+                {/* <li><NavLink className="dropdown-item" to="/franchise-details">Franchise Details</NavLink></li> */}
+                <li><NavLink className="dropdown-item" to="/franchise-verification">Franchise Verification</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/study-centers">Franchise List</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/franchise-login">Franchise Login</NavLink></li>
               </ul>
             </li>
 

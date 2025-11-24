@@ -1,82 +1,54 @@
-import { useState } from "react";
+// public-site/src/pages/StudentLogin.jsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import API from '../api/api';
 
 export default function StudentLogin() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginMessage, setLoginMessage] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-
-    if (!username || !password) {
-      setLoginMessage("Please enter both username and password.");
-      return;
-    }
-
-    // Dummy authentication logic — replace with backend call later
-    if (username === "student01" && password === "password123") {
-      setLoginMessage("✅ Login successful! Redirecting...");
-      // Example redirect (if routing to dashboard later)
-      // navigate("/student-dashboard");
-    } else {
-      setLoginMessage("❌ Invalid username or password.");
+    setError('');
+    try {
+      const res = await API.post('/auth/student-login', { email, password });
+      // backend returns token + student (based on earlier controller)
+      const token = res.data.token ?? res.data.data?.token ?? res.data?.token;
+      const user = res.data.user ?? res.data.data?.user ?? res.data?.student ?? res.data?.data;
+      if (!token) {
+        // If your server returns different shape adjust accordingly
+        // fallback: if login returns student object and token in nested property try res.data
+      }
+      localStorage.setItem('token', token);
+      // optionally store currentUser snapshot
+      if (user) localStorage.setItem('currentUser', JSON.stringify(user));
+      navigate('/student/profile');
+    } catch (err) {
+      console.error('student login', err);
+      setError(err.response?.data?.message || err.message || 'Login failed');
     }
   };
 
   return (
-    <div className="container py-5">
-      <h2 className="text-center fw-bold mb-4">Student Login</h2>
-
-      <div className="card shadow-sm p-4 mx-auto" style={{ maxWidth: "500px" }}>
-        <form onSubmit={handleLogin}>
-          {/* Username */}
-          <div className="mb-3">
-            <label htmlFor="username" className="form-label fw-semibold">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              className="form-control"
-              placeholder="Enter Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-
-          {/* Password */}
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label fw-semibold">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              className="form-control"
-              placeholder="Enter Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          {/* Submit */}
-          <button type="submit" className="btn btn-primary w-100 fw-semibold">
-            Login
-          </button>
-        </form>
-
-        {loginMessage && (
-          <div
-            className={`alert mt-4 text-center ${
-              loginMessage.includes("successful")
-                ? "alert-success"
-                : "alert-danger"
-            }`}
-          >
-            {loginMessage}
-          </div>
-        )}
-      </div>
+    <div className="container my-5" style={{ maxWidth: 540 }}>
+      <h3 className="mb-4">Student Login</h3>
+      {error && <div className="alert alert-danger">{error}</div>}
+      <form onSubmit={handleLogin}>
+        <div className="mb-2">
+          <label className="form-label">Email</label>
+          <input type="email" required className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Password</label>
+          <input type="password" required className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <div className="d-flex gap-2">
+          <button className="btn btn-primary">Login</button>
+          <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/student/signup')}>Signup</button>
+        </div>
+      </form>
     </div>
   );
 }
