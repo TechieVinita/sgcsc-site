@@ -6,35 +6,15 @@ import api from '../api/axiosInstance';
 import './Home.css';
 
 // local dev fallback image
-const DEV_UPLOADED_IMAGE = '/mnt/data/58e83842-f724-41ef-b678-0d3ad1e30ed8.png';
+const DEV_UPLOADED_IMAGE =
+  '/mnt/data/58e83842-f724-41ef-b678-0d3ad1e30ed8.png';
 
-// Fallback static affiliations (used only if backend returns none)
+// Fallback static affiliations (only used if backend returns nothing at all)
 const FALLBACK_AFFILIATIONS = [
   {
     id: 'f1',
-    name: 'ABC Institute',
-    subtitle: 'Partner Institution',
-    img: DEV_UPLOADED_IMAGE,
-    link: DEV_UPLOADED_IMAGE,
-  },
-  {
-    id: 'f2',
-    name: 'XYZ University',
-    subtitle: 'Accredited University',
-    img: DEV_UPLOADED_IMAGE,
-    link: DEV_UPLOADED_IMAGE,
-  },
-  {
-    id: 'f3',
-    name: 'LMN Education Board',
-    subtitle: 'Affiliated Board',
-    img: DEV_UPLOADED_IMAGE,
-    link: DEV_UPLOADED_IMAGE,
-  },
-  {
-    id: 'f4',
-    name: 'PQR Academy',
-    subtitle: 'Collaborating Academy',
+    name: 'Affiliation 1',
+    subtitle: '',
     img: DEV_UPLOADED_IMAGE,
     link: DEV_UPLOADED_IMAGE,
   },
@@ -67,6 +47,13 @@ export default function Home() {
   const [affLoading, setAffLoading] = useState(true);
   const [affError, setAffError] = useState(null);
 
+  // Dynamic students + members for home page
+  const [recentStudents, setRecentStudents] = useState([]);
+  const [certifiedStudents, setCertifiedStudents] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [homeLoading, setHomeLoading] = useState(true);
+  const [homeError, setHomeError] = useState(null);
+
   // Scroll function for carousels
   const scroll = (ref, direction, amount = 320) => {
     const node = ref.current;
@@ -76,7 +63,7 @@ export default function Home() {
     node.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
-  // Fetch affiliations on mount
+  // Fetch affiliations + home students + members on mount
   useEffect(() => {
     let isMounted = true;
 
@@ -88,6 +75,7 @@ export default function Home() {
         if (process.env.NODE_ENV === 'development') {
           console.debug('Affiliations API response:', res.data);
         }
+
         const items = extractArray(res.data);
 
         const normalized = items
@@ -101,7 +89,8 @@ export default function Home() {
               it.file ||
               it.img ||
               DEV_UPLOADED_IMAGE;
-            const name = it.name || it.title || it.caption || `Affiliation ${i + 1}`;
+            const name =
+              it.name || it.title || it.caption || `Affiliation ${i + 1}`;
             const subtitle = it.subtitle || it.tagline || it.type || '';
             const link = it.link || it.website || it.urlLink || img;
             return {
@@ -131,7 +120,42 @@ export default function Home() {
       }
     };
 
+    const fetchHomeLists = async () => {
+      setHomeError(null);
+      setHomeLoading(true);
+      try {
+        const [recentRes, certifiedRes, membersRes] = await Promise.all([
+          api.get('/students/recent-home'),
+          api.get('/students/certified-home'),
+          api.get('/members'),
+        ]);
+
+        if (!isMounted) return;
+
+        const recentArr = extractArray(recentRes.data);
+        const certifiedArr = extractArray(certifiedRes.data);
+        const membersArr = extractArray(membersRes.data);
+
+        setRecentStudents(recentArr);
+        setCertifiedStudents(certifiedArr);
+        setMembers(membersArr);
+      } catch (err) {
+        console.error('Failed to fetch home lists:', err);
+        if (isMounted) {
+          setHomeError(
+            err?.response?.data?.message ||
+              err.message ||
+              'Failed to load home page data'
+          );
+        }
+      } finally {
+        if (isMounted) setHomeLoading(false);
+      }
+    };
+
     fetchAffiliations();
+    fetchHomeLists();
+
     return () => {
       isMounted = false;
     };
@@ -141,6 +165,50 @@ export default function Home() {
     affiliations && affiliations.length > 0
       ? affiliations
       : FALLBACK_AFFILIATIONS;
+
+  // Map API data into the structure expected by renderCarouselSection
+
+  // recent-home: we want "Joined <courseName>" based on joinDate logic on backend
+  const recentItems =
+    recentStudents.length > 0
+      ? recentStudents.map((s) => {
+          const courseName =
+            s.courseName || (s.course && s.course.name) || '';
+          return {
+            name: s.name,
+            course: courseName ? `Joined ${courseName}` : 'Joined course',
+            avatarUrl: s.avatarUrl, // reserved if you later add avatars
+          };
+        })
+      : [];
+
+  // certified-home: we want "Certified in <courseName>" or fallback text
+  const certifiedItems =
+    certifiedStudents.length > 0
+      ? certifiedStudents.map((s) => {
+          const courseName =
+            s.courseName || (s.course && s.course.name) || '';
+          return {
+            name: s.name,
+            course: courseName
+              ? `Certified in ${courseName}`
+              : s.certifiedText || 'Certified student',
+            avatarUrl: s.avatarUrl,
+          };
+        })
+      : [];
+
+  const memberItems =
+    members.length > 0
+      ? members
+          .filter((m) => m.isActive !== false)
+          .sort((a, b) => (a.order || 0) - (b.order || 0))
+          .map((m) => ({
+            name: m.name,
+            course: m.role || '',
+            avatarUrl: m.img,
+          }))
+      : [];
 
   return (
     <div>
@@ -216,35 +284,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Recent Join Students (still static for now) */}
-      {renderCarouselSection('Recent Join Students', recentRef, scroll, [
-        { name: 'Rahul Sharma', course: 'Joined ADCA course' },
-        { name: 'Anjali Verma', course: 'Joined DCA course' },
-        { name: 'Vikram Singh', course: 'Joined MCA course' },
-        { name: 'Pooja Gupta', course: 'Joined PDCA course' },
-        { name: 'Amit Yadav', course: 'Joined CCC course' },
-        { name: 'Kiran Das', course: 'Joined DIT course' },
-      ])}
+      {/* Home-page lists status */}
+      {homeLoading && (
+        <div className="text-center text-muted mt-3">Loading home data…</div>
+      )}
+      {homeError && (
+        <div className="text-center text-danger mt-3">{homeError}</div>
+      )}
 
-      {/* Certified Students (still static for now) */}
-      {renderCarouselSection('Certified Students', certifiedRef, scroll, [
-        { name: 'Rakesh Kumar', course: 'Certified in ADIT' },
-        { name: 'Neha Patel', course: 'Certified in DOAP' },
-        { name: 'Amit Joshi', course: 'Certified in DSPP' },
-        { name: 'Sonia Rao', course: 'Certified in ADCP' },
-        { name: 'Rohit Mehta', course: 'Certified in DTP' },
-        { name: 'Meena Sharma', course: 'Certified in DCA' },
-      ])}
+      {/* Recent Join Students */}
+      {renderCarouselSection(
+        'Recent Join Students',
+        recentRef,
+        scroll,
+        recentItems
+      )}
 
-      {/* Our Institute Members (still static for now) */}
-      {renderCarouselSection('Our Institute Members', membersRef, scroll, [
-        { name: 'Dr. Ashok Singh', course: 'Director' },
-        { name: 'Mrs. Rekha Sharma', course: 'Course Coordinator' },
-        { name: 'Mr. Manoj Verma', course: 'Head Trainer' },
-        { name: 'Ms. Priya Tiwari', course: 'Admin Officer' },
-        { name: 'Mr. Ravi Sahu', course: 'Exam Controller' },
-        { name: 'Ms. Kavita Rao', course: 'HR Executive' },
-      ])}
+      {/* Certified Students */}
+      {renderCarouselSection(
+        'Certified Students',
+        certifiedRef,
+        scroll,
+        certifiedItems
+      )}
+
+      {/* Our Institute Members */}
+      {renderCarouselSection(
+        'Our Institute Members',
+        membersRef,
+        scroll,
+        memberItems
+      )}
 
       {/* Our Affiliations */}
       <section className="container py-5">
@@ -368,6 +438,8 @@ export default function Home() {
 
 // --- Reusable Carousel Section Component ---
 function renderCarouselSection(title, ref, scroll, items) {
+  if (!items || items.length === 0) return null;
+
   return (
     <section className="container py-5">
       <h3 className="fw-bold text-center mb-4">{title}</h3>
@@ -400,9 +472,12 @@ function renderCarouselSection(title, ref, scroll, items) {
               }}
             >
               <img
-                src={`https://picsum.photos/seed/${encodeURIComponent(
-                  item.name
-                )}/150/150`}
+                src={
+                  item.avatarUrl ||
+                  `https://picsum.photos/seed/${encodeURIComponent(
+                    item.name
+                  )}/150/150`
+                }
                 alt={item.name}
                 className="card-img-top rounded-circle mx-auto mt-3"
                 style={{ width: '90px', height: '90px', objectFit: 'cover' }}
