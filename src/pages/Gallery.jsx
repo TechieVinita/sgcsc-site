@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../api/api";
+import API from "../api/axiosInstance";
 
 export default function Gallery() {
   const [gallery, setGallery] = useState([]);
@@ -47,18 +47,23 @@ export default function Gallery() {
     const fetchGallery = async () => {
       try {
         const res = await API.get("/gallery");
-        // Use fallback if response empty or invalid
-        if (!res.data || res.data.length === 0) {
+
+        const items = Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+
+        if (items.length === 0) {
           console.warn("Gallery empty — using fallback images.");
           setGallery(fallbackData);
         } else {
-          setGallery(res.data);
+          setGallery(items);
         }
       } catch (err) {
         console.error("Error fetching gallery, showing fallback:", err);
         setGallery(fallbackData);
       }
     };
+
     fetchGallery();
   }, []);
 
@@ -76,36 +81,27 @@ export default function Gallery() {
           gallery.map((item) => (
             <div className="col-sm-6 col-md-4 col-lg-3" key={item._id}>
               <div
-                className="card border-0 shadow-sm overflow-hidden position-relative"
+                className="card border-0 shadow-sm overflow-hidden"
                 style={{ borderRadius: "10px" }}
               >
                 <img
                   src={
-                    item.image.startsWith("http")
+                    item.image?.startsWith("http")
                       ? item.image
                       : `http://localhost:5000/uploads/${item.image}`
                   }
                   alt={item.title}
                   className="card-img-top"
-                  style={{
-                    height: "220px",
-                    objectFit: "cover",
-                    transition: "transform 0.3s ease",
-                  }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.05)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
+                  style={{ height: "220px", objectFit: "cover" }}
                   onError={(e) => {
-                    // In case local image fails
                     e.currentTarget.src =
                       "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80";
                   }}
                 />
                 <div className="card-body text-center bg-light">
-                  <h6 className="fw-semibold text-dark mb-0">{item.title}</h6>
+                  <h6 className="fw-semibold text-dark mb-0">
+                    {item.title}
+                  </h6>
                 </div>
               </div>
             </div>

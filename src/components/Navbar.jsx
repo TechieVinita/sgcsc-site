@@ -76,7 +76,7 @@ export default function Navbar() {
                 {/* <li><NavLink className="dropdown-item" to="/franchise-details">Franchise Details</NavLink></li> */}
                 <li><NavLink className="dropdown-item" to="/franchise-verification">Franchise Verification</NavLink></li>
                 <li><NavLink className="dropdown-item" to="/study-centers">Franchise List</NavLink></li>
-                {/* <li><NavLink className="dropdown-item" to="/franchise-login">Franchise Login</NavLink></li> */}
+                <li><NavLink className="dropdown-item" to="/franchise-login">Franchise Login</NavLink></li>
               </ul>
             </li>
 
@@ -97,7 +97,7 @@ export default function Navbar() {
                 <li><NavLink className="dropdown-item" to="/result-verification">Result Verification</NavLink></li>
                 <li><NavLink className="dropdown-item" to="/certificate-verification">Certificate Verification</NavLink></li>
                 <li><NavLink className="dropdown-item" to="/admit-card">Admit Card</NavLink></li>
-                {/* <li><NavLink className="dropdown-item" to="/student-login">Student Login</NavLink></li> */}
+                <li><NavLink className="dropdown-item" to="/student-login">Student Login</NavLink></li>
               </ul>
             </li>
 

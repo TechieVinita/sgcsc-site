@@ -2,7 +2,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Hero from '../components/HeroSection';
 import homeImg from '../assets/images/home-page-img.png';
-import api from '../api/axiosInstance';
+// import api from '../api/axiosInstance';
+import api from '../api/api';
 import './Home.css';
 
 // local dev fallback image

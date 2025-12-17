@@ -1,7 +1,7 @@
 // public-site/src/pages/StudentLogin.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function StudentLogin() {
   const [email, setEmail] = useState('');

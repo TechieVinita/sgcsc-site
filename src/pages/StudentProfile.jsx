@@ -1,70 +1,89 @@
 // public-site/src/pages/StudentProfile.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function StudentProfile() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      navigate('/student-login');
+      return;
+    }
+
+    // Optional fast UI from cache
+    const cached = localStorage.getItem('currentUser');
+    if (cached) {
       try {
-        const res = await API.get('/auth/me');
-        const duck = res.data?.data ?? res.data;
-        setUser(duck);
-      } catch (err) {
-        console.error('me', err);
-        // not authenticated — redirect to login
-        localStorage.removeItem('token');
-        navigate('/student-login');
-      } finally {
-        setLoading(false);
+        setUser(JSON.parse(cached));
+      } catch {
+        localStorage.removeItem('currentUser');
       }
-    };
-    load();
+    }
+
+    API.get('/auth/student-me')
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        if (!data || !data._id) {
+          throw new Error('Invalid student payload');
+        }
+        setUser(data);
+        localStorage.setItem('currentUser', JSON.stringify(data));
+      })
+      .catch((err) => {
+        console.error('❌ student-me error:', err);
+
+        setError(
+          err.userMessage ||
+          err.response?.data?.message ||
+          'Session expired. Please login again.'
+        );
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
+
+        setTimeout(() => {
+          navigate('/student-login');
+        }, 1500);
+      })
+      .finally(() => setLoading(false));
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('currentUser');
-    navigate('/');
-  };
+  if (loading) {
+    return <div className="container my-5">Loading profile…</div>;
+  }
 
-  if (loading) return <div className="container my-5">Loading profile...</div>;
+  if (error) {
+    return (
+      <div className="container my-5">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
+
   if (!user) return null;
 
   return (
     <div className="container my-5">
-      <div className="card p-4">
-        <div className="d-flex align-items-center gap-4">
-          <div style={{ width: 90, height: 90, borderRadius: 10, background: '#efefef' }} />
-          <div>
-            <h4 className="mb-0">{user.name}</h4>
-            <div className="small text-muted">{user.email}</div>
-            <div className="small text-muted">Role: {user.role}</div>
-          </div>
-          <div className="ms-auto">
-            <button className="btn btn-outline-danger" onClick={handleLogout}>Logout</button>
-          </div>
-        </div>
+      <div className="card p-4 shadow-sm">
+        <h4 className="mb-1">{user.name}</h4>
+        <div className="text-muted">{user.email}</div>
 
-        <hr className="my-3" />
+        <hr />
 
-        <div>
-          <h6>Student Details</h6>
-          <dl className="row">
-            <dt className="col-sm-3">Roll No</dt>
-            <dd className="col-sm-9">{user.rollNo || '—'}</dd>
-
-            <dt className="col-sm-3">Contact</dt>
-            <dd className="col-sm-9">{user.contact || '—'}</dd>
-
-            <dt className="col-sm-3">Joined</dt>
-            <dd className="col-sm-9">{new Date(user.createdAt).toLocaleDateString()}</dd>
-          </dl>
-        </div>
+        <p><strong>Contact:</strong> {user.contact || '—'}</p>
+        <p>
+          <strong>Joined:</strong>{' '}
+          {user.createdAt
+            ? new Date(user.createdAt).toLocaleDateString()
+            : '—'}
+        </p>
       </div>
     </div>
   );
