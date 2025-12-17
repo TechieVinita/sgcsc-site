@@ -62,17 +62,66 @@ export default function FranchiseRegistration() {
 
     setFiles((prev) => ({ ...prev, [name]: file }));
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  try {
+    const fd = new FormData();
 
-    if (formData.captchaInput !== captcha) {
-      alert("Invalid Captcha Code!");
-      return;
+    // TEXT FIELDS
+    fd.append("instituteId", formData.instituteId);
+    fd.append("ownerName", formData.ownerName);
+    fd.append("instituteName", formData.instituteName);
+    fd.append("dob", formData.dob);
+    fd.append("aadharNumber", formData.aadharNumber);
+    fd.append("panNumber", formData.panNumber);
+    fd.append("address", formData.address);
+    fd.append("state", formData.state);
+    fd.append("district", formData.district);
+    fd.append("operatorsCount", formData.operatorsCount);
+    fd.append("classRooms", formData.classRooms);
+    fd.append("totalComputers", formData.totalComputers);
+    fd.append("centerSpace", formData.centerSpace);
+    fd.append("whatsapp", formData.whatsapp);
+    fd.append("contact", formData.contact);
+    fd.append("email", formData.email);
+    fd.append("ownerQualification", formData.ownerQualification);
+    fd.append("hasReception", formData.hasReception);
+    fd.append("hasStaffRoom", formData.hasStaffRoom);
+    fd.append("hasWaterSupply", formData.hasWaterSupply);
+    fd.append("hasToilet", formData.hasToilet);
+
+    // FILES — NAMES MUST MATCH MULTER
+    if (files.aadharFront) fd.append("aadharFront", files.aadharFront);
+    if (files.aadharBack) fd.append("aadharBack", files.aadharBack);
+    if (files.panImage) fd.append("panImage", files.panImage);
+    if (files.institutePhoto) fd.append("institutePhoto", files.institutePhoto);
+    if (files.ownerSign) fd.append("ownerSign", files.ownerSign);
+    if (files.ownerImage) fd.append("ownerImage", files.ownerImage);
+    if (files.certificateFile) fd.append("certificateFile", files.certificateFile);
+
+    const res = await fetch(
+      "http://localhost:5000/api/franchises/register",
+      {
+        method: "POST",
+        body: fd,
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Registration failed");
     }
 
-    alert("Franchise form submitted successfully!");
-  };
+    alert("Franchise registration submitted successfully!");
+    window.location.reload();
+  } catch (err) {
+    console.error("FRANCHISE SUBMIT ERROR:", err);
+    alert(err.message || "Failed to submit form");
+  }
+};
+
 
   return (
     <div className="container my-5">
