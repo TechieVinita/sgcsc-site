@@ -10,7 +10,7 @@ export default function About() {
       <div className="container my-5">
         <h2 className="fw-bold mb-3">About SGCSC</h2>
         <p>
-          SHREE GANPATO COMPUTER AND STUDY CENTRE (SGCSC) is dedicated to
+          SHREE GANPATI COMPUTER AND STUDY CENTRE (SGCSC) is dedicated to
           providing high-quality professional courses to enhance your skills
           and boost your career growth. Our mission is to make learning
           accessible, practical, and career-oriented.

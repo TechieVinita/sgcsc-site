@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import API from "../api/axiosInstance";
+
 
 export default function FranchiseRegistration() {
   const [formData, setFormData] = useState({
@@ -18,8 +20,8 @@ export default function FranchiseRegistration() {
     staffRoom: "",
     waterSupply: "",
     toilet: "",
-    username: "",
-    password: "",
+    // username: "",
+    // password: "",
     captchaInput: "",
   });
 
@@ -28,7 +30,7 @@ export default function FranchiseRegistration() {
     aadharBack: null,
     institutePhoto: null,
     ownerSign: null,
-    ownerPhoto: null,
+    ownerImage: null,
   });
 
   const [captcha] = useState(Math.floor(1000 + Math.random() * 9000).toString());
@@ -47,7 +49,7 @@ export default function FranchiseRegistration() {
       aadharFront: [100, 300],
       aadharBack: [100, 300],
       institutePhoto: [100, 300],
-      ownerPhoto: [100, 300],
+      ownerImage: [100, 300],
       ownerSign: [0, 100],
     };
 
@@ -65,11 +67,17 @@ export default function FranchiseRegistration() {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
+  if (formData.captchaInput !== captcha) {
+  alert("Invalid captcha");
+  return;
+}
+
+
   try {
     const fd = new FormData();
 
     // TEXT FIELDS
-    fd.append("instituteId", formData.instituteId);
+    // fd.append("instituteId", formData.instituteId);
     fd.append("ownerName", formData.ownerName);
     fd.append("instituteName", formData.instituteName);
     fd.append("dob", formData.dob);
@@ -78,10 +86,14 @@ const handleSubmit = async (e) => {
     fd.append("address", formData.address);
     fd.append("state", formData.state);
     fd.append("district", formData.district);
-    fd.append("operatorsCount", formData.operatorsCount);
-    fd.append("classRooms", formData.classRooms);
-    fd.append("totalComputers", formData.totalComputers);
-    fd.append("centerSpace", formData.centerSpace);
+    // fd.append("operatorsCount", formData.operatorsCount);
+    // fd.append("classRooms", formData.classRooms);
+    // fd.append("totalComputers", formData.totalComputers);
+    // fd.append("centerSpace", formData.centerSpace);
+    fd.append("numTeachers", formData.numTeachers);
+    fd.append("numClassrooms", formData.numClassrooms);
+    fd.append("qualification", formData.qualification);
+
     fd.append("whatsapp", formData.whatsapp);
     fd.append("contact", formData.contact);
     fd.append("email", formData.email);
@@ -100,19 +112,12 @@ const handleSubmit = async (e) => {
     if (files.ownerImage) fd.append("ownerImage", files.ownerImage);
     if (files.certificateFile) fd.append("certificateFile", files.certificateFile);
 
-    const res = await fetch(
-      "http://localhost:5000/api/franchises/register",
-      {
-        method: "POST",
-        body: fd,
-      }
-    );
+await API.post("/franchises/public/register", fd);
+alert("Franchise application submitted successfully!");
+window.location.reload();
 
-    const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.message || "Registration failed");
-    }
+
 
     alert("Franchise registration submitted successfully!");
     window.location.reload();
@@ -178,7 +183,7 @@ const handleSubmit = async (e) => {
             { label: "Aadhar Back (100KB - 300KB)", name: "aadharBack" },
             { label: "Upload Institute Photo (100KB - 300KB)", name: "institutePhoto" },
             { label: "Center Owner Sign (0KB - 100KB)", name: "ownerSign" },
-            { label: "Upload Image of Franchise Owner (100KB - 300KB)", name: "ownerPhoto" },
+            { label: "Upload Image of Franchise Owner (100KB - 300KB)", name: "ownerImage" },
           ].map((item, i) => (
             <div className="col-md-6 mb-3" key={i}>
               <label className="form-label fw-semibold">{item.label}</label>
@@ -341,8 +346,8 @@ const handleSubmit = async (e) => {
         {/* Username / Password */}
         <div className="row mb-3">
           <div className="col-md-6">
-            <label className="form-label fw-semibold">Username</label>
-            <input
+            {/* <label className="form-label fw-semibold">Username</label> */}
+            {/* <input
               type="text"
               name="username"
               className="form-control"
@@ -350,11 +355,11 @@ const handleSubmit = async (e) => {
               value={formData.username}
               onChange={handleChange}
               required
-            />
+            /> */}
           </div>
           <div className="col-md-6">
-            <label className="form-label fw-semibold">Password</label>
-            <input
+            {/* <label className="form-label fw-semibold">Password</label> */}
+            {/* <input
               type="password"
               name="password"
               className="form-control"
@@ -362,7 +367,7 @@ const handleSubmit = async (e) => {
               value={formData.password}
               onChange={handleChange}
               required
-            />
+            /> */}
           </div>
         </div>
 

@@ -4,9 +4,9 @@ export default function PrivacyPolicy() {
       <h1 className="text-center mb-4">Privacy Policy</h1>
 
       <section className="mb-4">
-        <h3>SHREE GANPATO COMPUTER AND STUDY CENTRE</h3>
+        <h3>SHREE GANPATI COMPUTER AND STUDY CENTRE</h3>
         <p>
-          SHREE GANPATO COMPUTER AND STUDY CENTRE (SGCSC) operates the www.sgcsc.co.in website, which provides the service.
+          SHREE GANPATI COMPUTER AND STUDY CENTRE (SGCSC) operates the www.sgcsc.co.in website, which provides the service.
         </p>
         <p>
           This page is used to inform website visitors regarding our policies with the collection, use, and disclosure of personal information if anyone decides to use our service, the www.sgcsc.co.in website.

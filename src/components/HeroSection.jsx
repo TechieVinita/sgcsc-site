@@ -8,7 +8,7 @@ export default function HeroSection() {
     >
       <div className="container text-center text-white">
         <h1 className="fw-bold mb-3" style={{ fontSize: "2.8rem" }}>
-          SHREE GANPATO COMPUTER & STUDY CENTRE
+          SHREE GANPATI COMPUTER & STUDY CENTRE
         </h1>
 
         <p

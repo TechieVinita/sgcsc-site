@@ -21,7 +21,8 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const CenterLogin = lazy(() => import('./pages/CenterLogin'));
-const FranchiseDetails = lazy(() => import('./pages/FranchiseDetails'));
+const FranchiseVerification = lazy(() => import('./pages/FranchiseVerification'));
+const FranchiseList = lazy(() => import('./pages/FranchiseList'));
 const CertificateVerification = lazy(() => import('./pages/CertificateVerification'));
 const ResultVerification = lazy(() => import('./pages/ResultVerification'));
 const FranchiseRegistration = lazy(() => import('./pages/FranchiseRegistration'));
@@ -69,10 +70,10 @@ export default function App() {
               <Route path="/contact" element={<Contact />} />
 
               {/* Franchise flows */}
-              <Route path="/franchise-details" element={<FranchiseDetails />} />
+              <Route path="/franchise-list" element={<FranchiseList />} />
               <Route path="/franchise-registration" element={<FranchiseRegistration />} />
               <Route path="/franchise-login" element={<FranchiseLogin />} />
-              <Route path="/franchise-verification" element={<FranchiseDetails />} />
+              <Route path="/franchise-verification" element={<FranchiseVerification />} />
 
               {/* Student flows */}
               <Route path="/student-login" element={<StudentLogin />} />
