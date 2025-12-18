@@ -1,55 +1,56 @@
-// public-site/src/pages/StudentProfile.jsx
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 
 export default function StudentProfile() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
 
+  const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  /* ============================
+     LOAD PROFILE
+  ============================ */
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("student_token");
 
     if (!token) {
-      navigate('/student-login');
+      navigate("/student-login");
       return;
     }
 
-    // Optional fast UI from cache
-    const cached = localStorage.getItem('currentUser');
-    if (cached) {
-      try {
-        setUser(JSON.parse(cached));
-      } catch {
-        localStorage.removeItem('currentUser');
-      }
-    }
-
-    API.get('/auth/student-me')
+    API.get("/student-profile/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => {
-        const data = res.data?.data ?? res.data;
-        if (!data || !data._id) {
-          throw new Error('Invalid student payload');
+        if (!res.data?.data?._id) {
+          throw new Error("Invalid profile payload");
         }
-        setUser(data);
-        localStorage.setItem('currentUser', JSON.stringify(data));
+
+        setStudent(res.data.data);
+
+        // update navbar cache
+        localStorage.setItem(
+          "student_basic",
+          JSON.stringify({
+            _id: res.data.data._id,
+            name: res.data.data.name,
+            photoUrl: res.data.data.photoUrl,
+          })
+        );
       })
       .catch((err) => {
-        console.error('❌ student-me error:', err);
+        console.error("Student profile error:", err);
 
-        setError(
-          err.userMessage ||
-          err.response?.data?.message ||
-          'Session expired. Please login again.'
-        );
-
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentUser');
+        setError("Session expired. Please login again.");
+        localStorage.removeItem("student_token");
+        localStorage.removeItem("student_basic");
 
         setTimeout(() => {
-          navigate('/student-login');
+          navigate("/student-login");
         }, 1500);
       })
       .finally(() => setLoading(false));
@@ -67,23 +68,41 @@ export default function StudentProfile() {
     );
   }
 
-  if (!user) return null;
+  if (!student) return null;
 
   return (
     <div className="container my-5">
-      <div className="card p-4 shadow-sm">
-        <h4 className="mb-1">{user.name}</h4>
-        <div className="text-muted">{user.email}</div>
+      <div className="card shadow-sm p-4">
+
+        <div className="d-flex align-items-center mb-4">
+          <img
+            src={student.photoUrl || "/no-user.png"}
+            alt="Profile"
+            width={80}
+            height={80}
+            className="rounded-circle me-3"
+            style={{ objectFit: "cover" }}
+          />
+          <div>
+            <h4 className="mb-0">{student.name}</h4>
+            <small className="text-muted">
+              Enrollment No: {student.enrollmentNo}
+            </small>
+          </div>
+        </div>
 
         <hr />
 
-        <p><strong>Contact:</strong> {user.contact || '—'}</p>
+        <p><strong>Course:</strong> {student.courseName || "—"}</p>
+        <p><strong>Center:</strong> {student.centerName || "—"}</p>
+        <p><strong>Status:</strong> {student.isActive ? "Active" : "Inactive"}</p>
         <p>
-          <strong>Joined:</strong>{' '}
-          {user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString()
-            : '—'}
+          <strong>Joined:</strong>{" "}
+          {student.createdAt
+            ? new Date(student.createdAt).toLocaleDateString()
+            : "—"}
         </p>
+
       </div>
     </div>
   );

@@ -1,53 +1,76 @@
-// public-site/src/pages/StudentLogin.jsx
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 
 export default function StudentLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setLoading(true);
+
     try {
-      const res = await API.post('/auth/student-login', { email, password });
-      // backend returns token + student (based on earlier controller)
-      const token = res.data.token ?? res.data.data?.token ?? res.data?.token;
-      const user = res.data.user ?? res.data.data?.user ?? res.data?.student ?? res.data?.data;
-      if (!token) {
-        // If your server returns different shape adjust accordingly
-        // fallback: if login returns student object and token in nested property try res.data
-      }
-      localStorage.setItem('token', token);
-      // optionally store currentUser snapshot
-      if (user) localStorage.setItem('currentUser', JSON.stringify(user));
-      navigate('/student/profile');
+      const res = await API.post("/auth/student-login", {
+        username,
+        password,
+      });
+
+      localStorage.setItem("student_token", res.data.token);
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(res.data.data)
+      );
+
+      navigate("/student/profile");
     } catch (err) {
-      console.error('student login', err);
-      setError(err.response?.data?.message || err.message || 'Login failed');
+      setError(
+        err.response?.data?.message || "Login failed"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container my-5" style={{ maxWidth: 540 }}>
-      <h3 className="mb-4">Student Login</h3>
+    <div className="container my-5" style={{ maxWidth: 420 }}>
+      <h3 className="text-center mb-4">Student Login</h3>
+
       {error && <div className="alert alert-danger">{error}</div>}
-      <form onSubmit={handleLogin}>
-        <div className="mb-2">
-          <label className="form-label">Email</label>
-          <input type="email" required className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
+
+      <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">Password</label>
-          <input type="password" required className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <label>Username</label>
+          <input
+            className="form-control"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
         </div>
-        <div className="d-flex gap-2">
-          <button className="btn btn-primary">Login</button>
-          <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/student/signup')}>Signup</button>
+
+        <div className="mb-3">
+          <label>Password</label>
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
+
+        <button
+          className="btn btn-primary w-100"
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
       </form>
     </div>
   );

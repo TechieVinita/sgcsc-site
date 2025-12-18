@@ -48,16 +48,20 @@ export default function Gallery() {
       try {
         const res = await API.get("/gallery");
 
-        const items = Array.isArray(res.data?.data)
-          ? res.data.data
-          : [];
+const items = Array.isArray(res.data?.data)
+  ? res.data.data.filter(item => item.category === "gallery")
+  : [];
 
-        if (items.length === 0) {
-          console.warn("Gallery empty — using fallback images.");
-          setGallery(fallbackData);
-        } else {
-          setGallery(items);
-        }
+if (items.length === 0) {
+  console.warn("No gallery images found — using fallback images.");
+  setGallery(fallbackData);
+} else {
+  setGallery(items);
+}
+
+
+
+
       } catch (err) {
         console.error("Error fetching gallery, showing fallback:", err);
         setGallery(fallbackData);

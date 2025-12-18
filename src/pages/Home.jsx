@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Hero from "../components/HeroSection";
+// import Hero from "../components/HeroSection";
 import homeImg from "../assets/images/home-page-img.png";
 import api from "../api/axiosInstance";
 import "./Home.css";
@@ -7,25 +7,46 @@ import "./Home.css";
 /* =====================
    BASE URL (NO /api)
    ===================== */
-const BACKEND_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL
-    ? process.env.REACT_APP_API_BASE_URL.replace(/\/api\/?$/, "")
-    : "http://localhost:5000";
+// const BACKEND_BASE_URL =
+//   process.env.REACT_APP_API_BASE_URL
+//     ? process.env.REACT_APP_API_BASE_URL.replace(/\/api\/?$/, "")
+//     : "http://localhost:5000";
 
 /* =====================
    IMAGE RESOLVER
    ===================== */
-const resolveImage = (img) => {
-  if (!img) return "/images/no-image.png";
+// const resolveImage = (img) => {
+//   if (!img) return "/images/no-image.png";
 
-  if (img.startsWith("http")) return img;
+//   if (img.startsWith("http")) return img;
 
-  if (img.startsWith("/uploads")) {
-    return `${BACKEND_BASE_URL}${img}`;
-  }
+//   if (img.startsWith("/uploads")) {
+//     return `${BACKEND_BASE_URL}${img}`;
+//   }
 
-  return `${BACKEND_BASE_URL}/uploads/${img}`;
+//   return `${BACKEND_BASE_URL}/uploads/${img}`;
+// };
+
+
+/* =====================
+   SAFE IMAGE COMPONENT
+   ===================== */
+const SafeImg = ({ src, alt = "", ...props }) => {
+  const fallback = "/images/no-image.png";
+
+  return (
+    <img
+      src={src || fallback}
+      alt={alt}
+      onError={(e) => {
+        e.currentTarget.src = fallback;
+      }}
+      {...props}
+    />
+  );
 };
+
+
 
 /* =====================
    SAFE ARRAY EXTRACTOR
@@ -97,17 +118,20 @@ export default function Home() {
   /* =====================
      NORMALIZED ITEMS
      ===================== */
-  const recentItems = recentStudents.slice(0, 5).map((s) => ({
-    name: s.name,
-    subtitle: "Joined course",
-    img: resolveImage(s.photo),
-  }));
+const recentItems = recentStudents.slice(0, 5).map((s) => ({
+  name: s.name,
+  subtitle: "Joined course",
+  // subtitle: s.course,
+  img: s.photo, // Cloudinary URL
+}));
 
-  const certifiedItems = certifiedStudents.slice(0, 5).map((s) => ({
-    name: s.name,
-    subtitle: "Certified student",
-    img: resolveImage(s.photo),
-  }));
+
+const certifiedItems = certifiedStudents.slice(0, 5).map((s) => ({
+  name: s.name,
+  subtitle: "Certified student",
+  img: s.photo,
+}));
+
 
   const memberItems = members
     .filter((m) => m.isActive !== false)
@@ -116,91 +140,214 @@ export default function Home() {
     .map((m) => ({
       name: m.name,
       subtitle: m.designation || "",
-      img: resolveImage(m.photoUrl),
+      img: m.photoUrl,
     }));
 
   const affiliationItems = affiliations.slice(0, 5).map((a) => ({
     id: a._id,
-    name: a.title || "Affiliation",
-    img: resolveImage(a.image),
+    // name: a.title || "Affiliation",
+    img: a.image,
   }));
 
   /* =====================
      GRID RENDERER
      ===================== */
-  const renderGrid = (title, items, rounded = true) => {
-    if (!items.length) return null;
+const renderGrid = (title, items, rounded = true) => {
+  if (!items.length) return null;
 
-    return (
-      <section className="container py-5">
-        <h3 className="fw-bold text-center mb-4">{title}</h3>
+  return (
+    <section className="py-5">
+      <div className="container">
+        <div className="text-center mb-5">
+          <h2 className="fw-bold">{title}</h2>
+          <div
+            className="mx-auto mt-2"
+            style={{
+              width: 60,
+              height: 3,
+              backgroundColor: "#0d6efd",
+              borderRadius: 2,
+            }}
+          />
+        </div>
 
-        <div className="row justify-content-center">
+        <div className="row g-4 justify-content-center">
           {items.map((item, i) => (
-            <div
-              key={i}
-              className="col-6 col-sm-4 col-md-3 col-lg-2 mb-4 d-flex justify-content-center"
-            >
+            <div key={i} className="col-6 col-sm-4 col-md-3 col-lg-2">
               <div
-                className="card border-0 shadow-sm text-center"
-                style={{ width: 180 }}
+                className="h-100 text-center bg-white rounded shadow-sm p-3"
+                style={{ transition: "0.3s ease" }}
               >
-                <img
-                  src={item.img}
-                  alt={item.name}
-                  className={`card-img-top mx-auto mt-3 ${
-                    rounded ? "rounded-circle" : ""
-                  }`}
+                <div
+                  className="mx-auto mb-3"
                   style={{
-                    width: rounded ? 90 : "100%",
-                    height: rounded ? 90 : 140,
-                    objectFit: "cover",
+                    width: rounded ? 96 : "100%",
+                    height: rounded ? 96 : 140,
+                    borderRadius: rounded ? "50%" : 8,
+                    overflow: "hidden",
+                    backgroundColor: "#f1f1f1",
                   }}
-                />
-                <div className="card-body p-2">
-                  <h6 className="fw-bold mb-1">{item.name}</h6>
-                  <p className="small text-muted mb-0">
-                    {item.subtitle}
-                  </p>
+                >
+                  <SafeImg
+                    src={item.img}
+                    alt={item.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
                 </div>
+
+                <h6 className="fw-semibold mb-1">{item.name}</h6>
+                {item.subtitle && (
+                  <small className="text-muted">{item.subtitle}</small>
+                )}
               </div>
             </div>
           ))}
         </div>
-      </section>
-    );
-  };
+      </div>
+    </section>
+  );
+};
+
 
   /* =====================
      RENDER
      ===================== */
   return (
     <div>
-      <Hero />
+      {/* <Hero /> */}
 
       {/* About */}
-      <section className="container mt-5">
-        <div className="row align-items-center">
-          <div className="col-md-6">
-            <h2 className="fw-bold mb-3">About SGCSC</h2>
-            <p className="lead">
-              <strong>SHREE GANPATI COMPUTER AND STUDY CENTRE</strong> —
-              Autonomous Regd. Under Public Trust Act 1882.
-            </p>
-            <p>
-              Registered Under NITI Aayog & Ministry of MSME Govt. of India.
-              ISO 9001:2015 Certified Organization.
-            </p>
+
+{/* =====================
+   TEXT-BASED HERO SECTION
+===================== */}
+<section
+  className="py-5"
+  style={{
+    background: "linear-gradient(135deg, #0d6efd, #084298)",
+    color: "#fff",
+  }}
+>
+  <div className="container">
+    <div className="row justify-content-center text-center">
+      <div className="col-lg-9">
+        <h1 className="fw-bold mb-3">
+          SHREE GANPATI COMPUTER & STUDY CENTRE
+        </h1>
+
+        <p className="lead mb-4">
+          Autonomous Institute Registered under Public Trust Act 1882 <br />
+          ISO 9001:2015 Certified • NITI Aayog & MSME Approved
+        </p>
+
+        <div className="d-flex flex-wrap justify-content-center gap-3">
+          <div className="px-4 py-2 bg-light text-dark rounded shadow-sm fw-semibold">
+            Government Recognised
           </div>
-          <div className="col-md-6 text-center">
-            <img
-              src={homeImg}
-              alt="About SGCSC"
-              className="img-fluid rounded shadow"
-            />
+          <div className="px-4 py-2 bg-light text-dark rounded shadow-sm fw-semibold">
+            Career-Focused Courses
+          </div>
+          <div className="px-4 py-2 bg-light text-dark rounded shadow-sm fw-semibold">
+            Trusted Since Years
           </div>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section className="py-5" style={{ backgroundColor: "#f8f9fa" }}>
+  <div className="container">
+    <div className="row text-center mb-5">
+      <div className="col">
+        <h2 className="fw-bold">Why Choose SGCSC?</h2>
+        <p className="text-muted mt-2">
+          Focused on skills, certification, and real student outcomes
+        </p>
+      </div>
+    </div>
+
+    <div className="row g-4">
+      {/* Practical Training */}
+      <div className="col-md-4">
+        <div className="h-100 p-4 bg-white rounded shadow-sm text-center">
+          <div
+            className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+            style={{
+              width: 70,
+              height: 70,
+              backgroundColor: "#0d6efd",
+              color: "#fff",
+              fontSize: 28,
+            }}
+          >
+            🛠️
+          </div>
+          <h5 className="fw-bold">Practical Training</h5>
+          <p className="text-muted mb-0">
+            Industry-oriented courses designed to build real-world,
+            job-ready skills.
+          </p>
+        </div>
+      </div>
+
+      {/* Certified Programs */}
+      <div className="col-md-4">
+        <div className="h-100 p-4 bg-white rounded shadow-sm text-center">
+          <div
+            className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+            style={{
+              width: 70,
+              height: 70,
+              backgroundColor: "#198754",
+              color: "#fff",
+              fontSize: 28,
+            }}
+          >
+            🎓
+          </div>
+          <h5 className="fw-bold">Certified Programs</h5>
+          <p className="text-muted mb-0">
+            Certificates that are verified, trusted, and recognised
+            across institutions.
+          </p>
+        </div>
+      </div>
+
+      {/* Student Success */}
+      <div className="col-md-4">
+        <div className="h-100 p-4 bg-white rounded shadow-sm text-center">
+          <div
+            className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+            style={{
+              width: 70,
+              height: 70,
+              backgroundColor: "#fd7e14",
+              color: "#fff",
+              fontSize: 28,
+            }}
+          >
+            ⭐
+          </div>
+          <h5 className="fw-bold">Student Success</h5>
+          <p className="text-muted mb-0">
+            Thousands of students trained with proven academic and
+            career results.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
 
       {loading && (
         <div className="text-center text-muted mt-4">
@@ -215,9 +362,57 @@ export default function Home() {
       )}
 
       {renderGrid("Recent Join Students", recentItems)}
-      {renderGrid("Certified Students", certifiedItems)}
-      {renderGrid("Our Institute Members", memberItems)}
-      {renderGrid("Our Affiliations", affiliationItems, false)}
+      {/* {renderGrid("Certified Students", certifiedItems)} */}
+      {/* {renderGrid("Our Institute Members", memberItems)} */}
+      <section className="py-5 bg-light">
+  <div className="container">
+    <div className="text-center mb-5">
+      <h2 className="fw-bold">Our Affiliations</h2>
+      <p className="text-muted">
+        Recognised & associated institutions
+      </p>
+    </div>
+
+    <div className="row g-4 justify-content-center align-items-center">
+      {affiliationItems.map((item, i) => (
+        <div
+          key={i}
+          className="col-6 col-sm-4 col-md-3 col-lg-2 d-flex justify-content-center"
+        >
+          <div
+            className="bg-white rounded shadow-sm p-3 d-flex align-items-center justify-content-center"
+            style={{
+              width: "100%",
+              height: 120,
+              transition: "0.3s ease",
+            }}
+          >
+<a
+  href={item.img}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="w-100 h-100 d-flex align-items-center justify-content-center"
+>
+  <SafeImg
+    src={item.img}
+    alt="Affiliation"
+    style={{
+      maxWidth: "100%",
+      maxHeight: "100%",
+      objectFit: "contain",
+      cursor: "pointer",
+    }}
+  />
+</a>
+
+
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
     </div>
   );
 }
