@@ -1,6 +1,15 @@
 import { NavLink } from "react-router-dom";
 
 export default function Navbar() {
+const franchiseToken = localStorage.getItem("token");
+const studentToken = localStorage.getItem("student_token");
+
+const isFranchiseLoggedIn = !!franchiseToken;
+// const isStudentLoggedIn = !!studentToken;
+
+const isStudentLoggedIn = !!localStorage.getItem("student_token");
+
+
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
       <div className="container">
@@ -76,30 +85,109 @@ export default function Navbar() {
                 {/* <li><NavLink className="dropdown-item" to="/franchise-details">Franchise Details</NavLink></li> */}
                 <li><NavLink className="dropdown-item" to="/franchise-verification">Franchise Verification</NavLink></li>
                 <li><NavLink className="dropdown-item" to="/study-centers">Franchise List</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/franchise-login">Franchise Login</NavLink></li>
+
+                {!isFranchiseLoggedIn && (
+  <li>
+    <NavLink className="dropdown-item" to="/franchise-login">
+      Franchise Login
+    </NavLink>
+  </li>
+)}
+
+{isFranchiseLoggedIn && (
+  <>
+    <li>
+      <NavLink className="dropdown-item" to="/franchise/profile">
+        Profile
+      </NavLink>
+    </li>
+    <li>
+      <button
+        className="dropdown-item text-danger"
+        onClick={() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("currentUser");
+          window.location.href = "/franchise-login";
+        }}
+      >
+        Logout
+      </button>
+    </li>
+  </>
+)}
+
               </ul>
             </li>
 
             {/* Student Dropdown */}
-            <li className="nav-item dropdown">
-              <span 
-                className="nav-link dropdown-toggle" 
-                id="studentDropdown" 
-                role="button" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false"
-                style={{ cursor: "pointer" }}
-              >
-                Student
-              </span>
-              <ul className="dropdown-menu" aria-labelledby="studentDropdown">
-                <li><NavLink className="dropdown-item" to="/enrollment-verification">Enrollment Verification</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/result-verification">Result Verification</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/certificate-verification">Certificate Verification</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/admit-card">Admit Card</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/student-login">Student Login</NavLink></li>
-              </ul>
-            </li>
+<li className="nav-item dropdown">
+  <a
+    className="nav-link dropdown-toggle"
+    href="#"
+    role="button"
+    data-bs-toggle="dropdown"
+  >
+    Student
+  </a>
+
+  <ul className="dropdown-menu">
+    {/* PUBLIC */}
+    <li>
+      <a className="dropdown-item" href="/student/enrollment-verification">
+        Enrollment Verification
+      </a>
+    </li>
+    <li>
+      <a className="dropdown-item" href="/student/result-verification">
+        Result Verification
+      </a>
+    </li>
+    <li>
+      <a className="dropdown-item" href="/student/certificate-verification">
+        Certificate Verification
+      </a>
+    </li>
+
+    {isStudentLoggedIn && (
+      <>
+        <li><hr className="dropdown-divider" /></li>
+
+        {/* PROTECTED */}
+        <li>
+          <a className="dropdown-item" href="/student/profile">
+            Student Profile
+          </a>
+        </li>
+        <li>
+          <a className="dropdown-item" href="/student/results">
+            My Results
+          </a>
+        </li>
+        <li>
+          <a className="dropdown-item" href="/student/admit-card">
+            Admit Card
+          </a>
+        </li>
+
+        <li><hr className="dropdown-divider" /></li>
+
+        <li>
+          <button
+            className="dropdown-item text-danger"
+            onClick={() => {
+              localStorage.removeItem("student_token");
+              window.location.href = "/student-login";
+            }}
+          >
+            Logout
+          </button>
+        </li>
+      </>
+    )}
+  </ul>
+</li>
+
+
 
             {/* Gallery */}
             <li className="nav-item">

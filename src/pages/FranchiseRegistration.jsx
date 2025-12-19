@@ -81,8 +81,8 @@ const handleSubmit = async (e) => {
     fd.append("ownerName", formData.ownerName);
     fd.append("instituteName", formData.instituteName);
     fd.append("dob", formData.dob);
-    fd.append("aadharNumber", formData.aadharNumber);
-    fd.append("panNumber", formData.panNumber);
+    // fd.append("aadharNumber", formData.aadharNumber);
+    // fd.append("panNumber", formData.panNumber);
     fd.append("address", formData.address);
     fd.append("state", formData.state);
     fd.append("district", formData.district);
@@ -97,20 +97,20 @@ const handleSubmit = async (e) => {
     fd.append("whatsapp", formData.whatsapp);
     fd.append("contact", formData.contact);
     fd.append("email", formData.email);
-    fd.append("ownerQualification", formData.ownerQualification);
-    fd.append("hasReception", formData.hasReception);
-    fd.append("hasStaffRoom", formData.hasStaffRoom);
-    fd.append("hasWaterSupply", formData.hasWaterSupply);
-    fd.append("hasToilet", formData.hasToilet);
+    // fd.append("ownerQualification", formData.ownerQualification);
+    // fd.append("hasReception", formData.hasReception);
+    // fd.append("hasStaffRoom", formData.hasStaffRoom);
+    // fd.append("hasWaterSupply", formData.hasWaterSupply);
+    // fd.append("hasToilet", formData.hasToilet);
 
     // FILES — NAMES MUST MATCH MULTER
     if (files.aadharFront) fd.append("aadharFront", files.aadharFront);
     if (files.aadharBack) fd.append("aadharBack", files.aadharBack);
-    if (files.panImage) fd.append("panImage", files.panImage);
+    // if (files.panImage) fd.append("panImage", files.panImage);
     if (files.institutePhoto) fd.append("institutePhoto", files.institutePhoto);
     if (files.ownerSign) fd.append("ownerSign", files.ownerSign);
     if (files.ownerImage) fd.append("ownerImage", files.ownerImage);
-    if (files.certificateFile) fd.append("certificateFile", files.certificateFile);
+    // if (files.certificateFile) fd.append("certificateFile", files.certificateFile);
 
 await API.post("/franchises/public/register", fd);
 alert("Franchise application submitted successfully!");

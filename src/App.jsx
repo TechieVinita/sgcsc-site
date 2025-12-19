@@ -8,6 +8,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './index.css';
 
+import FranchiseProfile from "./pages/FranchiseProfile";
+import FranchiseProtectedRoute from "./components/FranchiseProtectedRoute";
+
+
+import StudentProtectedRoute from "./components/StudentProtectedRoute";
+import StudentProfile from "./pages/StudentProfile";
+import StudentResults from "./pages/StudentResults";
+import StudentAdmitCard from "./pages/StudentAdmitCard";
+
+
 // DEV: local test logo you uploaded (will be converted to a URL by your tooling)
 // Use this only in development; replace with a CDN/real URL in production.
 export const DEV_LOGO_URL = '/mnt/data/58e83842-f724-41ef-b678-0d3ad1e30ed8.png';
@@ -20,7 +30,6 @@ const Gallery = lazy(() => import('./pages/Gallery'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const CenterLogin = lazy(() => import('./pages/CenterLogin'));
 const FranchiseVerification = lazy(() => import('./pages/FranchiseVerification'));
 const FranchiseList = lazy(() => import('./pages/FranchiseList'));
 const CertificateVerification = lazy(() => import('./pages/CertificateVerification'));
@@ -35,6 +44,9 @@ const FranchiseLogin = lazy(() => import('./pages/FranchiseLogin'));
 const LongTermCourses = lazy(() => import('./pages/LongTermCourses'));
 const ShortTermCourses = lazy(() => import('./pages/ShortTermCourses'));
 const CertificateCourses = lazy(() => import('./pages/CertificateCourses'));
+
+
+
 
 // Small UX: scroll to top on route change
 function ScrollToTop() {
@@ -79,13 +91,51 @@ export default function App() {
               <Route path="/student-login" element={<StudentLogin />} />
               <Route path="/student-signup" element={<StudentSignup />} />
 
+<Route
+  path="/student/profile"
+  element={
+    <StudentProtectedRoute>
+      <StudentProfile />
+    </StudentProtectedRoute>
+  }
+/>
+
+<Route
+  path="/student/results"
+  element={
+    <StudentProtectedRoute>
+      <StudentResults />
+    </StudentProtectedRoute>
+  }
+/>
+
+<Route
+  path="/student/admit-card"
+  element={
+    <StudentProtectedRoute>
+      <StudentAdmitCard />
+    </StudentProtectedRoute>
+  }
+/>
+
+
+
               {/* Utility / verification pages */}
               <Route path="/study-centers" element={<StudyCenterList />} />
               <Route path="/result-verification" element={<ResultVerification />} />
               <Route path="/certificate-verification" element={<CertificateVerification />} />
               <Route path="/enrollment-verification" element={<EnrollmentVerification />} />
               <Route path="/admit-card" element={<AdmitCard />} />
-              <Route path="/center-login" element={<CenterLogin />} />
+
+<Route
+  path="/franchise/profile"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseProfile />
+    </FranchiseProtectedRoute>
+  }
+/>
+
 
               {/* Legal */}
               <Route path="/disclaimer" element={<Disclaimer />} />

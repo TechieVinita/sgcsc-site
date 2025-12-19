@@ -1,45 +1,31 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 
 export default function StudentLogin() {
-  const navigate = useNavigate();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
 
     try {
-      const res = await API.post("/auth/student-login", {
+      const res = await API.post("/student-auth/login", {
         username,
         password,
       });
 
       localStorage.setItem("student_token", res.data.token);
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify(res.data.data)
-      );
-
-      navigate("/student/profile");
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Login failed"
-      );
-    } finally {
-      setLoading(false);
+      window.location.href = "/student/profile";
+    } catch {
+      setError("Invalid username or password");
     }
   };
 
   return (
-    <div className="container my-5" style={{ maxWidth: 420 }}>
-      <h3 className="text-center mb-4">Student Login</h3>
+    <div className="container my-5" style={{ maxWidth: "400px" }}>
+      <h3 className="mb-3">Student Login</h3>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
@@ -65,11 +51,8 @@ export default function StudentLogin() {
           />
         </div>
 
-        <button
-          className="btn btn-primary w-100"
-          disabled={loading}
-        >
-          {loading ? "Logging in..." : "Login"}
+        <button className="btn btn-primary w-100">
+          Login
         </button>
       </form>
     </div>
