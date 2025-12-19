@@ -1,14 +1,35 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
-const franchiseToken = localStorage.getItem("token");
-const studentToken = localStorage.getItem("student_token");
+  const navigate = useNavigate();
 
-const isFranchiseLoggedIn = !!franchiseToken;
-// const isStudentLoggedIn = !!studentToken;
+  const studentToken = localStorage.getItem("student_token");
+  const franchiseToken = localStorage.getItem("franchise_token");
+  const role = localStorage.getItem("user_role"); // "student" | "franchise"
 
-const isStudentLoggedIn = !!localStorage.getItem("student_token");
+  const isLoggedIn = !!studentToken || !!franchiseToken;
 
+  // Fallback avatar generator (safe, free, no backend)
+const getFallbackAvatar = (seed = "user") =>
+  `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
+
+
+  const profileImage =
+  localStorage.getItem("profile_image") ||
+  getFallbackAvatar(role || "user");
+
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
+  const profileLink =
+    role === "student"
+      ? "/student/profile"
+      : role === "franchise"
+      ? "/franchise/profile"
+      : "/login";
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
@@ -24,184 +45,145 @@ const isStudentLoggedIn = !!localStorage.getItem("student_token");
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Navbar Links */}
+        {/* Links */}
         <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
+          <ul className="navbar-nav ms-auto align-items-center">
 
-            {/* Home */}
             <li className="nav-item">
-              <NavLink to="/" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
-                Home
-              </NavLink>
+              <NavLink className="nav-link" to="/">Home</NavLink>
             </li>
 
-            {/* About Company */}
             <li className="nav-item">
-              <NavLink to="/about" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
-                About Company
-              </NavLink>
+              <NavLink className="nav-link" to="/about">About Company</NavLink>
             </li>
 
-            {/* Our Courses Dropdown */}
+            {/* Courses */}
             <li className="nav-item dropdown">
-              <span 
-                className="nav-link dropdown-toggle" 
-                id="coursesDropdown" 
-                role="button" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false"
-                style={{ cursor: "pointer" }}
-              >
+              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                 Our Courses
               </span>
-              <ul className="dropdown-menu" aria-labelledby="coursesDropdown">
-                <li><NavLink className="dropdown-item" to="/long-term-courses">Long Term Courses (1 Year)</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/short-term-courses">Short Term Courses (6 Months)</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/certificate-courses">Certificate Courses (3 Months)</NavLink></li>
+              <ul className="dropdown-menu">
+                <li><NavLink className="dropdown-item" to="/long-term-courses">Long Term Courses</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/short-term-courses">Short Term Courses</NavLink></li>
+                <li><NavLink className="dropdown-item" to="/certificate-courses">Certificate Courses</NavLink></li>
               </ul>
             </li>
 
-            {/* Franchise Dropdown */}
-            <li className="nav-item dropdown">
-              <span 
-                className="nav-link dropdown-toggle" 
-                id="franchiseDropdown" 
-                role="button" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false"
-                style={{ cursor: "pointer" }}
-              >
-                Franchise
-              </span>
-              <ul className="dropdown-menu" aria-labelledby="franchiseDropdown">
-                <li><NavLink className="dropdown-item" to="/franchise-registration">Franchise Registration</NavLink></li>
-                {/* <li><NavLink className="dropdown-item" to="/franchise-details">Franchise Details</NavLink></li> */}
-                <li><NavLink className="dropdown-item" to="/franchise-verification">Franchise Verification</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/study-centers">Franchise List</NavLink></li>
-
-                {!isFranchiseLoggedIn && (
-  <li>
-    <NavLink className="dropdown-item" to="/franchise-login">
-      Franchise Login
-    </NavLink>
+            {/* Franchise (NO LOGIN HERE) */}
+{(!role || role === "franchise") && (
+  <li className="nav-item dropdown">
+    <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+      Franchise
+    </span>
+    <ul className="dropdown-menu">
+      <li>
+        <NavLink className="dropdown-item" to="/franchise-registration">
+          Franchise Registration
+        </NavLink>
+      </li>
+      <li>
+        <NavLink className="dropdown-item" to="/franchise-verification">
+          Franchise Verification
+        </NavLink>
+      </li>
+      <li>
+        <NavLink className="dropdown-item" to="/study-centers">
+          Franchise List
+        </NavLink>
+      </li>
+    </ul>
   </li>
 )}
 
-{isFranchiseLoggedIn && (
-  <>
-    <li>
-      <NavLink className="dropdown-item" to="/franchise/profile">
-        Profile
-      </NavLink>
-    </li>
-    <li>
-      <button
-        className="dropdown-item text-danger"
-        onClick={() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("currentUser");
-          window.location.href = "/franchise-login";
-        }}
-      >
-        Logout
-      </button>
-    </li>
-  </>
+            {/* Student (NO PROFILE HERE) */}
+{(!role || role === "student") && (
+  <li className="nav-item dropdown">
+    <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+      Student
+    </span>
+    <ul className="dropdown-menu">
+      <li>
+        <NavLink
+          className="dropdown-item"
+          to="/student/enrollment-verification"
+        >
+          Enrollment Verification
+        </NavLink>
+      </li>
+      <li>
+        <NavLink
+          className="dropdown-item"
+          to="/student/result-verification"
+        >
+          Result Verification
+        </NavLink>
+      </li>
+      <li>
+        <NavLink
+          className="dropdown-item"
+          to="/student/certificate-verification"
+        >
+          Certificate Verification
+        </NavLink>
+      </li>
+    </ul>
+  </li>
 )}
 
-              </ul>
-            </li>
 
-            {/* Student Dropdown */}
-<li className="nav-item dropdown">
-  <a
-    className="nav-link dropdown-toggle"
-    href="#"
-    role="button"
-    data-bs-toggle="dropdown"
-  >
-    Student
-  </a>
-
-  <ul className="dropdown-menu">
-    {/* PUBLIC */}
-    <li>
-      <a className="dropdown-item" href="/student/enrollment-verification">
-        Enrollment Verification
-      </a>
-    </li>
-    <li>
-      <a className="dropdown-item" href="/student/result-verification">
-        Result Verification
-      </a>
-    </li>
-    <li>
-      <a className="dropdown-item" href="/student/certificate-verification">
-        Certificate Verification
-      </a>
-    </li>
-
-    {isStudentLoggedIn && (
-      <>
-        <li><hr className="dropdown-divider" /></li>
-
-        {/* PROTECTED */}
-        <li>
-          <a className="dropdown-item" href="/student/profile">
-            Student Profile
-          </a>
-        </li>
-        <li>
-          <a className="dropdown-item" href="/student/results">
-            My Results
-          </a>
-        </li>
-        <li>
-          <a className="dropdown-item" href="/student/admit-card">
-            Admit Card
-          </a>
-        </li>
-
-        <li><hr className="dropdown-divider" /></li>
-
-        <li>
-          <button
-            className="dropdown-item text-danger"
-            onClick={() => {
-              localStorage.removeItem("student_token");
-              window.location.href = "/student-login";
-            }}
-          >
-            Logout
-          </button>
-        </li>
-      </>
-    )}
-  </ul>
-</li>
-
-
-
-            {/* Gallery */}
             <li className="nav-item">
-              <NavLink to="/gallery" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
-                Gallery
-              </NavLink>
+              <NavLink className="nav-link" to="/gallery">Gallery</NavLink>
             </li>
 
-            {/* Contact */}
             <li className="nav-item">
-              <NavLink to="/contact" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
-                Contact
-              </NavLink>
+              <NavLink className="nav-link" to="/contact">Contact</NavLink>
             </li>
+
+            {/* RIGHT SIDE AUTH */}
+{/* RIGHT SIDE AUTH */}
+{!isLoggedIn && (
+  <NavLink to="/login" className="btn btn-primary ms-3">
+    Login
+  </NavLink>
+)}
+
+{isLoggedIn && (
+  <div className="dropdown ms-3">
+    <img
+      src={profileImage}
+      alt="Profile"
+      width="32"
+      height="32"
+      className="rounded-circle dropdown-toggle border"
+      style={{ cursor: "pointer", objectFit: "cover" }}
+      data-bs-toggle="dropdown"
+      onError={(e) => {
+        e.target.src = getFallbackAvatar(role);
+      }}
+    />
+
+    <ul className="dropdown-menu dropdown-menu-end">
+      <li>
+        <NavLink className="dropdown-item" to={profileLink}>
+          My Profile
+        </NavLink>
+      </li>
+      <li>
+        <button
+          className="dropdown-item text-danger"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </li>
+    </ul>
+  </div>
+)}
+
 
           </ul>
         </div>

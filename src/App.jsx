@@ -17,6 +17,11 @@ import StudentProfile from "./pages/StudentProfile";
 import StudentResults from "./pages/StudentResults";
 import StudentAdmitCard from "./pages/StudentAdmitCard";
 
+import StudentEnrollmentVerification from "./pages/StudentEnrollmentVerification";
+import StudentResultVerification from "./pages/StudentResultVerification";
+import StudentCertificateVerification from "./pages/StudentCertificateVerification";
+
+
 
 // DEV: local test logo you uploaded (will be converted to a URL by your tooling)
 // Use this only in development; replace with a CDN/real URL in production.
@@ -32,19 +37,17 @@ const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const FranchiseVerification = lazy(() => import('./pages/FranchiseVerification'));
 const FranchiseList = lazy(() => import('./pages/FranchiseList'));
-const CertificateVerification = lazy(() => import('./pages/CertificateVerification'));
-const ResultVerification = lazy(() => import('./pages/ResultVerification'));
 const FranchiseRegistration = lazy(() => import('./pages/FranchiseRegistration'));
 const StudyCenterList = lazy(() => import('./pages/StudyCenterList'));
-const EnrollmentVerification = lazy(() => import('./pages/EnrollmentVerification'));
 const AdmitCard = lazy(() => import('./pages/AdmitCard'));
-const StudentLogin = lazy(() => import('./pages/StudentLogin'));
+// const StudentLogin = lazy(() => import('./pages/StudentLogin'));
 const StudentSignup = lazy(() => import('./pages/StudentSignup'));
-const FranchiseLogin = lazy(() => import('./pages/FranchiseLogin'));
+// const FranchiseLogin = lazy(() => import('./pages/FranchiseLogin'));
 const LongTermCourses = lazy(() => import('./pages/LongTermCourses'));
 const ShortTermCourses = lazy(() => import('./pages/ShortTermCourses'));
 const CertificateCourses = lazy(() => import('./pages/CertificateCourses'));
 
+const Login = lazy(() => import('./pages/Login'));
 
 
 
@@ -84,12 +87,32 @@ export default function App() {
               {/* Franchise flows */}
               <Route path="/franchise-list" element={<FranchiseList />} />
               <Route path="/franchise-registration" element={<FranchiseRegistration />} />
-              <Route path="/franchise-login" element={<FranchiseLogin />} />
+
+
               <Route path="/franchise-verification" element={<FranchiseVerification />} />
 
               {/* Student flows */}
-              <Route path="/student-login" element={<StudentLogin />} />
-              <Route path="/student-signup" element={<StudentSignup />} />
+              {/* <Route path="/student-login" element={<StudentLogin />} /> */}
+              {/* <Route path="/student-signup" element={<StudentSignup />} /> */}
+
+              <Route path="/login" element={<Login />} />
+
+              <Route
+  path="/student/enrollment-verification"
+  element={<StudentEnrollmentVerification />}
+/>
+
+<Route
+  path="/student/result-verification"
+  element={<StudentResultVerification />}
+/>
+
+<Route
+  path="/student/certificate-verification"
+  element={<StudentCertificateVerification />}
+/>
+
+
 
 <Route
   path="/student/profile"
@@ -122,9 +145,6 @@ export default function App() {
 
               {/* Utility / verification pages */}
               <Route path="/study-centers" element={<StudyCenterList />} />
-              <Route path="/result-verification" element={<ResultVerification />} />
-              <Route path="/certificate-verification" element={<CertificateVerification />} />
-              <Route path="/enrollment-verification" element={<EnrollmentVerification />} />
               <Route path="/admit-card" element={<AdmitCard />} />
 
 <Route

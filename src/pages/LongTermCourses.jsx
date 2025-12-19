@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../api/axiosInstance";
+import Hero from '../components/HeroSection'; // optional hero banner
+
 
 export default function LongTermCourses() {
   const [courses, setCourses] = useState([]);
@@ -54,6 +56,8 @@ export default function LongTermCourses() {
 
   return (
     <div className="container py-5">
+      
+
       <h2 className="text-center fw-bold mb-5">
         Long Term Courses (1 Year)
       </h2>
