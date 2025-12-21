@@ -51,7 +51,7 @@ const getFallbackAvatar = (seed = "user") =>
 
         {/* Links */}
         <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto align-items-center">
+          <ul className="navbar-nav ms-auto">
 
             <li className="nav-item">
               <NavLink className="nav-link" to="/">Home</NavLink>
@@ -74,65 +74,65 @@ const getFallbackAvatar = (seed = "user") =>
             </li>
 
             {/* Franchise (NO LOGIN HERE) */}
-{(!role || role === "franchise") && (
-  <li className="nav-item dropdown">
-    <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-      Franchise
-    </span>
-    <ul className="dropdown-menu">
-      <li>
-        <NavLink className="dropdown-item" to="/franchise-registration">
-          Franchise Registration
-        </NavLink>
-      </li>
-      <li>
-        <NavLink className="dropdown-item" to="/franchise-verification">
-          Franchise Verification
-        </NavLink>
-      </li>
-      <li>
-        <NavLink className="dropdown-item" to="/study-centers">
-          Franchise List
-        </NavLink>
-      </li>
-    </ul>
-  </li>
-)}
+            {(!role || role === "franchise") && (
+              <li className="nav-item dropdown">
+                <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                  Franchise
+                </span>
+                <ul className="dropdown-menu">
+                  <li>
+                    <NavLink className="dropdown-item" to="/franchise-registration">
+                      Franchise Registration
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink className="dropdown-item" to="/franchise-verification">
+                      Franchise Verification
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink className="dropdown-item" to="/study-centers">
+                      Franchise List
+                    </NavLink>
+                  </li>
+                </ul>
+              </li>
+            )}
 
             {/* Student (NO PROFILE HERE) */}
-{(!role || role === "student") && (
-  <li className="nav-item dropdown">
-    <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-      Student
-    </span>
-    <ul className="dropdown-menu">
-      <li>
-        <NavLink
-          className="dropdown-item"
-          to="/student/enrollment-verification"
-        >
-          Enrollment Verification
-        </NavLink>
-      </li>
-      <li>
-        <NavLink
-          className="dropdown-item"
-          to="/student/result-verification"
-        >
-          Result Verification
-        </NavLink>
-      </li>
-      <li>
-        <NavLink
-          className="dropdown-item"
-          to="/student/certificate-verification"
-        >
-          Certificate Verification
-        </NavLink>
-      </li>
-    </ul>
-  </li>
-)}
+            {(!role || role === "student") && (
+              <li className="nav-item dropdown">
+                <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                  Student
+                </span>
+                <ul className="dropdown-menu">
+                  <li>
+                    <NavLink
+                      className="dropdown-item"
+                      to="/student/enrollment-verification"
+                    >
+                      Enrollment Verification
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      className="dropdown-item"
+                      to="/student/result-verification"
+                    >
+                      Result Verification
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      className="dropdown-item"
+                      to="/student/certificate-verification"
+                    >
+                      Certificate Verification
+                    </NavLink>
+                  </li>
+                </ul>
+              </li>
+            )}
 
 
             <li className="nav-item">
@@ -144,45 +144,44 @@ const getFallbackAvatar = (seed = "user") =>
             </li>
 
             {/* RIGHT SIDE AUTH */}
-{/* RIGHT SIDE AUTH */}
-{!isLoggedIn && (
-  <NavLink to="/login" className="btn btn-primary ms-3">
-    Login
-  </NavLink>
-)}
+            {!isLoggedIn && (
+              <NavLink to="/login" className="btn btn-primary ms-3">
+                Login
+              </NavLink>
+            )}
 
-{isLoggedIn && (
-  <div className="dropdown ms-3">
-    <img
-      src={profileImage}
-      alt="Profile"
-      width="32"
-      height="32"
-      className="rounded-circle dropdown-toggle border"
-      style={{ cursor: "pointer", objectFit: "cover" }}
-      data-bs-toggle="dropdown"
-      onError={(e) => {
-        e.target.src = getFallbackAvatar(role);
-      }}
-    />
+            {isLoggedIn && (
+              <div className="dropdown ms-3">
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  width="32"
+                  height="32"
+                  className="rounded-circle dropdown-toggle border"
+                  style={{ cursor: "pointer", objectFit: "cover" }}
+                  data-bs-toggle="dropdown"
+                  onError={(e) => {
+                    e.target.src = getFallbackAvatar(role);
+                  }}
+                />
 
-    <ul className="dropdown-menu dropdown-menu-end">
-      <li>
-        <NavLink className="dropdown-item" to={profileLink}>
-          My Profile
-        </NavLink>
-      </li>
-      <li>
-        <button
-          className="dropdown-item text-danger"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-      </li>
-    </ul>
-  </div>
-)}
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <NavLink className="dropdown-item" to={profileLink}>
+                      My Profile
+                    </NavLink>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item text-danger"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
 
 
           </ul>

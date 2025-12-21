@@ -23,10 +23,9 @@ export default function Footer() {
             <h5 className="mb-3">Quick Links</h5>
             <ul className="list-unstyled">
               <li><a href="/franchise-registration" className="text-light text-decoration-none hover-link">Franchise Registration</a></li>
-              <li><a href="/result-verification" className="text-light text-decoration-none hover-link">Result Verification</a></li>
-              <li><a href="/certificate-verification" className="text-light text-decoration-none hover-link">Certificate Verification</a></li>
-              <li><a href="/login" className="text-light text-decoration-none hover-link">Login</a></li>
-              {/* <li><a href="/franchise-details" className="text-light text-decoration-none hover-link">Franchise Details</a></li> */}
+              <li><a href="/student/result-verification" className="text-light text-decoration-none hover-link">Result Verification</a></li>
+              <li><a href="/student/certificate-verification" className="text-light text-decoration-none hover-link">Certificate Verification</a></li>
+              <li><a href="/login" className="text-light text-decoration-none hover-link">Student/Franchise Login</a></li>
             </ul>
           </div>
 

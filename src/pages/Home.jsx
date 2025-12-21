@@ -240,7 +240,7 @@ const renderGrid = (title, items, rounded = true) => {
         </h1>
 
         <p className="lead mb-4">
-          Autonomous Institute Registered under Public Trust Act 1882 <br />
+          An Autonomous Institute Registered under the Public Trust Act 1882 <br />
           ISO 9001:2015 Certified • NITI Aayog & MSME Approved
         </p>
 

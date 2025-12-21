@@ -22,6 +22,8 @@ export default function StudentResultVerification() {
 
   return (
     <div className="container my-5">
+      <h2 className="text-center mb-4">Result Verification</h2>
+
       <form onSubmit={handleSubmit} className="card p-4 mx-auto" style={{ maxWidth: 500 }}>
         <input className="form-control mb-3" placeholder="Roll No"
           value={rollNo} onChange={(e) => setRollNo(e.target.value)} />

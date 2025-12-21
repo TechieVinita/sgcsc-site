@@ -25,6 +25,8 @@ export default function StudentCertificateVerification() {
 
   return (
     <div className="container my-5">
+      <h2 className="text-center mb-4">Certificate Verification</h2>
+
       <form onSubmit={handleSubmit} className="card p-4 mx-auto" style={{ maxWidth: 500 }}>
         <input className="form-control mb-3" placeholder="Certificate No"
           value={certificateNo} onChange={(e) => setCertificateNo(e.target.value)} />

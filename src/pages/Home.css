@@ -14,3 +14,23 @@
   object-fit:cover;
   display:block;
 }
+
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .profile-avatar {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.dropdown-menu {
+  min-width: 160px;
+}
+

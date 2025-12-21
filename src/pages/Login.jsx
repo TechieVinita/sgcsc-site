@@ -22,7 +22,6 @@ export default function Login() {
 
         localStorage.setItem("student_token", res.data.token);
         localStorage.setItem("user_role", "student");
-
         window.location.href = "/student/profile";
       } else {
         res = await API.post("/franchise-auth/login", {
@@ -32,7 +31,6 @@ export default function Login() {
 
         localStorage.setItem("franchise_token", res.data.token);
         localStorage.setItem("user_role", "franchise");
-
         window.location.href = "/franchise/profile";
       }
     } catch (err) {
@@ -41,44 +39,76 @@ export default function Login() {
   };
 
   return (
-    <div className="container my-5" style={{ maxWidth: "400px" }}>
-      <h3 className="mb-3 text-center">Login</h3>
+    <div className="container my-5">
+      <div className="row justify-content-center">
+        <div className="col-md-5 col-lg-4">
+          <div className="card shadow-sm border-0">
+            <div className="card-body p-4">
 
-      <select
-        className="form-select mb-3"
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-      >
-        <option value="student">Student</option>
-        <option value="franchise">Franchise</option>
-      </select>
+              <h3 className="text-center fw-bold mb-1">Welcome Back</h3>
+              <p className="text-center text-muted mb-4">
+                Login to continue
+              </p>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+              {error && (
+                <div className="alert alert-danger py-2 text-center">
+                  {error}
+                </div>
+              )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <input
-            className="form-control"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+              <form onSubmit={handleSubmit}>
+                {/* LOGIN TYPE */}
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Login As</label>
+                  <select
+                    className="form-select"
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                  >
+                    <option value="student">Student</option>
+                    <option value="franchise">Franchise</option>
+                  </select>
+                </div>
+
+                {/* USERNAME */}
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Username</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* PASSWORD */}
+                <div className="mb-4">
+                  <label className="form-label fw-semibold">Password</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* SUBMIT */}
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100 py-2 fw-semibold"
+                >
+                  Login
+                </button>
+              </form>
+
+            </div>
+          </div>
         </div>
-
-        <div className="mb-3">
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <button className="btn btn-primary w-100">Login</button>
-      </form>
+      </div>
     </div>
   );
 }

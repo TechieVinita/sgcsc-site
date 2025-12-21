@@ -75,7 +75,7 @@ if (items.length === 0) {
     <div className="container my-5">
       <h1 className="text-center mb-4 fw-bold text-primary">Gallery</h1>
       <p className="text-center text-muted mb-5">
-        A glimpse into our institute — where learning meets excellence.
+        A glimpse into our institute where learning meets excellence.
       </p>
 
       <div className="row g-4">

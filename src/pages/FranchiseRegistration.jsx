@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import API from "../api/axiosInstance";
+
 
 
 export default function FranchiseRegistration() {
@@ -20,20 +21,29 @@ export default function FranchiseRegistration() {
     staffRoom: "",
     waterSupply: "",
     toilet: "",
-    // username: "",
-    // password: "",
+    username: "",
+    password: "",
     captchaInput: "",
   });
 
   const [files, setFiles] = useState({
     aadharFront: null,
     aadharBack: null,
+    panImage: null,
+    certificateFile: null,
     institutePhoto: null,
     ownerSign: null,
     ownerImage: null,
   });
 
-  const [captcha] = useState(Math.floor(1000 + Math.random() * 9000).toString());
+
+  // const [captcha] = useState(Math.floor(1000 + Math.random() * 9000).toString());
+  const [captcha, setCaptcha] = useState("");
+  const canvasRef = useRef(null);
+
+  const [showPassword, setShowPassword] = useState(false);
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,6 +61,9 @@ export default function FranchiseRegistration() {
       institutePhoto: [100, 300],
       ownerImage: [100, 300],
       ownerSign: [0, 100],
+      panImage: [100, 300],
+      certificateFile: [100, 500],
+
     };
 
     const [minKB, maxKB] = limits[name];
@@ -63,69 +76,130 @@ export default function FranchiseRegistration() {
     }
 
     setFiles((prev) => ({ ...prev, [name]: file }));
+      };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+
+      if (formData.captchaInput !== captcha) {
+        alert("Invalid captcha");
+        return;
+      }
+
+      try {
+        const fd = new FormData(); // ✅ DECLARED FIRST
+
+        // LOGIN
+        fd.append("username", formData.username);
+        fd.append("password", formData.password);
+
+        // TEXT FIELDS
+        fd.append("ownerName", formData.ownerName);
+        fd.append("instituteName", formData.instituteName);
+        fd.append("dob", formData.dob);
+        fd.append("address", formData.address);
+        fd.append("state", formData.state);
+        fd.append("district", formData.district);
+        fd.append("numTeachers", formData.numTeachers);
+        fd.append("numClassrooms", formData.numClassrooms);
+        fd.append("totalComputers", formData.totalComputers);
+        fd.append("qualification", formData.qualification);
+        fd.append("whatsapp", formData.whatsapp);
+        fd.append("contact", formData.contact);
+        fd.append("email", formData.email);
+
+        // FILES
+        if (files.aadharFront) fd.append("aadharFront", files.aadharFront);
+        if (files.aadharBack) fd.append("aadharBack", files.aadharBack);
+        if (files.institutePhoto) fd.append("institutePhoto", files.institutePhoto);
+        if (files.ownerSign) fd.append("ownerSign", files.ownerSign);
+        if (files.ownerImage) fd.append("ownerImage", files.ownerImage);
+        if (files.panImage) fd.append("panImage", files.panImage);
+        if (files.certificateFile) fd.append("certificateFile", files.certificateFile);
+
+        await API.post("/franchises/public/register", fd);
+
+        alert("Franchise application submitted successfully!");
+        window.location.reload();
+      } catch (err) {
+        console.error("FRANCHISE SUBMIT ERROR:", err);
+        alert(err.response?.data?.message || "Failed to submit form");
+      }
+    };
+
+
+    const generateCaptcha = () => {
+    const text = Math.random().toString(36).substring(2, 7).toUpperCase();
+    setCaptcha(text);
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // background
+    ctx.fillStyle = "#f2f2f2";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // smaller, uneven font
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#444";
+
+    // slight blur
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 1;
+
+    // draw each character separately with randomness
+    let x = 10;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      const y = 25 + Math.random() * 5;      // vertical jitter
+      const angle = (Math.random() - 0.5) * 0.4; // rotation
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+
+      x += 18; // spacing between characters
+    }
+
+    // reset blur
+    ctx.shadowBlur = 0;
+
+    // extra noise dots
+    for (let i = 0; i < 30; i++) {
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
+      ctx.beginPath();
+      ctx.arc(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        0.5,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+
+
+    // noise lines
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeStyle = "#aaa";
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * 120, Math.random() * 40);
+      ctx.lineTo(Math.random() * 120, Math.random() * 40);
+      ctx.stroke();
+    }
   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
 
-  if (formData.captchaInput !== captcha) {
-  alert("Invalid captcha");
-  return;
-}
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
 
 
-  try {
-    const fd = new FormData();
-
-    // TEXT FIELDS
-    // fd.append("instituteId", formData.instituteId);
-    fd.append("ownerName", formData.ownerName);
-    fd.append("instituteName", formData.instituteName);
-    fd.append("dob", formData.dob);
-    // fd.append("aadharNumber", formData.aadharNumber);
-    // fd.append("panNumber", formData.panNumber);
-    fd.append("address", formData.address);
-    fd.append("state", formData.state);
-    fd.append("district", formData.district);
-    // fd.append("operatorsCount", formData.operatorsCount);
-    // fd.append("classRooms", formData.classRooms);
-    // fd.append("totalComputers", formData.totalComputers);
-    // fd.append("centerSpace", formData.centerSpace);
-    fd.append("numTeachers", formData.numTeachers);
-    fd.append("numClassrooms", formData.numClassrooms);
-    fd.append("qualification", formData.qualification);
-
-    fd.append("whatsapp", formData.whatsapp);
-    fd.append("contact", formData.contact);
-    fd.append("email", formData.email);
-    // fd.append("ownerQualification", formData.ownerQualification);
-    // fd.append("hasReception", formData.hasReception);
-    // fd.append("hasStaffRoom", formData.hasStaffRoom);
-    // fd.append("hasWaterSupply", formData.hasWaterSupply);
-    // fd.append("hasToilet", formData.hasToilet);
-
-    // FILES — NAMES MUST MATCH MULTER
-    if (files.aadharFront) fd.append("aadharFront", files.aadharFront);
-    if (files.aadharBack) fd.append("aadharBack", files.aadharBack);
-    // if (files.panImage) fd.append("panImage", files.panImage);
-    if (files.institutePhoto) fd.append("institutePhoto", files.institutePhoto);
-    if (files.ownerSign) fd.append("ownerSign", files.ownerSign);
-    if (files.ownerImage) fd.append("ownerImage", files.ownerImage);
-    // if (files.certificateFile) fd.append("certificateFile", files.certificateFile);
-
-await API.post("/franchises/public/register", fd);
-alert("Franchise application submitted successfully!");
-window.location.reload();
-
-
-
-
-    alert("Franchise registration submitted successfully!");
-    window.location.reload();
-  } catch (err) {
-    console.error("FRANCHISE SUBMIT ERROR:", err);
-    alert(err.message || "Failed to submit form");
-  }
-};
 
 
   return (
@@ -184,6 +258,9 @@ window.location.reload();
             { label: "Upload Institute Photo (100KB - 300KB)", name: "institutePhoto" },
             { label: "Center Owner Sign (0KB - 100KB)", name: "ownerSign" },
             { label: "Upload Image of Franchise Owner (100KB - 300KB)", name: "ownerImage" },
+            { label: "PAN Card Image (100KB - 300KB)", name: "panImage" },
+            { label: "Certificate Image (100KB - 500KB)", name: "certificateFile" },
+
           ].map((item, i) => (
             <div className="col-md-6 mb-3" key={i}>
               <label className="form-label fw-semibold">{item.label}</label>
@@ -232,19 +309,18 @@ window.location.reload();
           </div>
 
           <div className="col-md-6">
-            <label className="form-label fw-semibold">Select District</label>
-            <select
+            <label className="form-label fw-semibold">District</label>
+            <input
+              type="text"
               name="district"
-              className="form-select"
+              className="form-control"
+              placeholder="Enter District"
               value={formData.district}
               onChange={handleChange}
               required
-            >
-              <option value="">--Select--</option>
-              <option value="Mau">Mau</option>
-              <option value="Raipur">Raipur</option>
-            </select>
+            />
           </div>
+
         </div>
 
         {/* Numbers */}
@@ -346,51 +422,76 @@ window.location.reload();
         {/* Username / Password */}
         <div className="row mb-3">
           <div className="col-md-6">
-            {/* <label className="form-label fw-semibold">Username</label> */}
-            {/* <input
+            <label className="form-label fw-semibold">Username</label>
+            <input
               type="text"
               name="username"
               className="form-control"
-              placeholder="Enter Username"
+              placeholder="Create Username"
               value={formData.username}
-              onChange={handleChange}
-              required
-            /> */}
-          </div>
-          <div className="col-md-6">
-            {/* <label className="form-label fw-semibold">Password</label> */}
-            {/* <input
-              type="password"
-              name="password"
-              className="form-control"
-              placeholder="Enter Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            /> */}
-          </div>
-        </div>
-
-        {/* Captcha */}
-        <div className="mb-3">
-          <label className="form-label fw-semibold d-block">Captcha</label>
-          <div className="d-flex align-items-center">
-            <div
-              className="border bg-white p-2 me-3 fw-bold fs-5 text-center"
-              style={{ width: "100px", letterSpacing: "3px" }}
-            >
-              {captcha}
-            </div>
-            <input
-              type="text"
-              name="captchaInput"
-              className="form-control"
-              placeholder="Enter Captcha Code"
-              value={formData.captchaInput}
               onChange={handleChange}
               required
             />
           </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">Password</label>
+            <div className="input-group">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                className="form-control"
+                placeholder="Create Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+        {/* Captcha */}
+        <div className="mb-3">
+          {/* <label className="form-label fw-semibold d-block">Captcha</label> */}
+            <div className="mb-3">
+              <label className="form-label fw-semibold">Captcha</label>
+
+              <div className="d-flex align-items-center gap-3">
+                <canvas
+                  ref={canvasRef}
+                  width="110"
+                  height="35"
+                  style={{ border: "1px solid #ccc" }}
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={generateCaptcha}
+                >
+                  ↻
+                </button>
+              </div>
+
+              <input
+                type="text"
+                name="captchaInput"
+                className="form-control mt-2"
+                placeholder="Enter Captcha Code"
+                value={formData.captchaInput}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
         </div>
 
         <div className="text-danger fw-semibold mb-3">
