@@ -1,6 +1,48 @@
 import React, { useState, useRef, useEffect } from "react";
 import API from "../api/axiosInstance";
 
+const OWNER_UPI_ID = "demo@upi";
+const REGISTRATION_FEE = 5000; // example amount
+
+const INDIAN_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+];
+
 
 
 export default function FranchiseRegistration() {
@@ -8,12 +50,15 @@ export default function FranchiseRegistration() {
     ownerName: "",
     instituteName: "",
     dob: "",
+    aadharNumber: "",
+    panNumber: "",
     address: "",
     state: "",
     district: "",
     numTeachers: "",
     numClassrooms: "",
     totalComputers: "",
+    centerSpace: "",
     whatsapp: "",
     contact: "",
     email: "",
@@ -21,6 +66,7 @@ export default function FranchiseRegistration() {
     staffRoom: "",
     waterSupply: "",
     toilet: "",
+    hasReception: "",
     username: "",
     password: "",
     captchaInput: "",
@@ -81,10 +127,11 @@ export default function FranchiseRegistration() {
     const handleSubmit = async (e) => {
       e.preventDefault();
 
-      if (formData.captchaInput !== captcha) {
+      if (formData.captchaInput.toUpperCase() !== captcha) {
         alert("Invalid captcha");
         return;
       }
+
 
       try {
         const fd = new FormData(); // ✅ DECLARED FIRST
@@ -107,6 +154,16 @@ export default function FranchiseRegistration() {
         fd.append("whatsapp", formData.whatsapp);
         fd.append("contact", formData.contact);
         fd.append("email", formData.email);
+        fd.append("staffRoom", formData.staffRoom);
+        fd.append("waterSupply", formData.waterSupply);
+        fd.append("toilet", formData.toilet);
+
+        fd.append("aadharNumber", formData.aadharNumber);
+        fd.append("panNumber", formData.panNumber);
+        fd.append("centerSpace", formData.centerSpace);
+        fd.append("hasReception", formData.hasReception);
+
+
 
         // FILES
         if (files.aadharFront) fd.append("aadharFront", files.aadharFront);
@@ -250,6 +307,45 @@ export default function FranchiseRegistration() {
           />
         </div>
 
+        {/* Aadhaar & PAN */}
+        <div className="row mb-3">
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">Aadhaar Card Number</label>
+            <input
+              type="text"
+              name="aadharNumber"
+              className="form-control"
+              placeholder="12-digit Aadhaar Number"
+              value={formData.aadharNumber}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, "").slice(0, 12);
+                setFormData((p) => ({ ...p, aadharNumber: v }));
+              }}
+              required
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">PAN Card Number</label>
+            <input
+              type="text"
+              name="panNumber"
+              className="form-control"
+              placeholder="ABCDE1234F"
+              value={formData.panNumber}
+              onChange={(e) =>
+                setFormData((p) => ({
+                  ...p,
+                  panNumber: e.target.value.toUpperCase(),
+                }))
+              }
+              maxLength={10}
+              required
+            />
+          </div>
+        </div>
+
+
         {/* File Uploads */}
         <div className="row">
           {[
@@ -270,7 +366,7 @@ export default function FranchiseRegistration() {
                 name={item.name}
                 className="form-control"
                 onChange={handleFileChange}
-                required
+                // required
               />
             </div>
           ))}
@@ -294,18 +390,20 @@ export default function FranchiseRegistration() {
         <div className="row mb-3">
           <div className="col-md-6">
             <label className="form-label fw-semibold">Select State</label>
-            <select
-              name="state"
-              className="form-select"
-              value={formData.state}
-              onChange={handleChange}
-              required
-            >
-              <option value="">--Select--</option>
-              <option value="Uttar Pradesh">Uttar Pradesh</option>
-              <option value="Madhya Pradesh">Madhya Pradesh</option>
-              <option value="Bihar">Bihar</option>
-            </select>
+              <select
+                name="state"
+                className="form-select"
+                value={formData.state}
+                onChange={handleChange}
+                required
+              >
+                <option value="">-- Select State --</option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
           </div>
 
           <div className="col-md-6">
@@ -325,47 +423,116 @@ export default function FranchiseRegistration() {
 
         {/* Numbers */}
         <div className="row mb-3">
-          {[
-            { label: "Number of Teachers", name: "numTeachers" },
-            { label: "Number of Class Rooms", name: "numClassrooms" },
-            { label: "Total Computers", name: "totalComputers" },
-          ].map((item, i) => (
-            <div className="col-md-4" key={i}>
-              <label className="form-label fw-semibold">{item.label}</label>
-              <input
-                type="number"
-                name={item.name}
-                className="form-control"
-                placeholder={`Enter ${item.label}`}
-                value={formData[item.name]}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          ))}
+          <div className="col-md-3">
+            <label className="form-label fw-semibold">Number of Teachers</label>
+            <input
+              type="number"
+              name="numTeachers"
+              className="form-control"
+              value={formData.numTeachers}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="col-md-3">
+            <label className="form-label fw-semibold">Number of Class Rooms</label>
+            <input
+              type="number"
+              name="numClassrooms"
+              className="form-control"
+              value={formData.numClassrooms}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="col-md-3">
+            <label className="form-label fw-semibold">Total Computers</label>
+            <input
+              type="number"
+              name="totalComputers"
+              className="form-control"
+              value={formData.totalComputers}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="col-md-3">
+            <label className="form-label fw-semibold">
+              Computer Center Space (sq.ft)
+            </label>
+            <input
+              type="number"
+              name="centerSpace"
+              className="form-control"
+              placeholder="e.g. 500"
+              value={formData.centerSpace}
+              onChange={handleChange}
+              required
+            />
+          </div>
         </div>
 
         {/* Contact Info */}
+
         <div className="row mb-3">
-          {[
-            { label: "Whatsapp Number", name: "whatsapp" },
-            { label: "Contact Number", name: "contact" },
-            { label: "E-Mail ID", name: "email", type: "email" },
-          ].map((item, i) => (
-            <div className="col-md-4" key={i}>
-              <label className="form-label fw-semibold">{item.label}</label>
+          {/* WhatsApp */}
+          <div className="col-md-4">
+            <label className="form-label fw-semibold">WhatsApp Number</label>
+            <div className="input-group">
+              <span className="input-group-text">+91</span>
               <input
-                type={item.type || "text"}
-                name={item.name}
+                type="tel"
+                name="whatsapp"
                 className="form-control"
-                placeholder={`Enter ${item.label}`}
-                value={formData[item.name]}
-                onChange={handleChange}
+                placeholder="10 digit number"
+                value={formData.whatsapp}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setFormData((p) => ({ ...p, whatsapp: v }));
+                }}
                 required
               />
             </div>
-          ))}
+          </div>
+
+          {/* Contact */}
+          <div className="col-md-4">
+            <label className="form-label fw-semibold">Contact Number</label>
+            <div className="input-group">
+              <span className="input-group-text">+91</span>
+              <input
+                type="tel"
+                name="contact"
+                className="form-control"
+                placeholder="10 digit number"
+                value={formData.contact}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setFormData((p) => ({ ...p, contact: v }));
+                }}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="col-md-4">
+            <label className="form-label fw-semibold">E-Mail ID</label>
+            <input
+              type="email"
+              name="email"
+              className="form-control"
+              placeholder="Enter E-Mail"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
         </div>
+
 
         {/* Qualification */}
         <div className="mb-3">
@@ -383,14 +550,17 @@ export default function FranchiseRegistration() {
           />
         </div>
 
+        
+
         {/* Facilities */}
         <div className="row mb-3">
           {[
+            { label: "Reception", name: "hasReception" },
             { label: "Staff Room", name: "staffRoom" },
             { label: "Water Supply", name: "waterSupply" },
             { label: "Toilet", name: "toilet" },
           ].map((item, i) => (
-            <div className="col-md-4" key={i}>
+            <div className="col-md-3" key={i}>
               <label className="form-label fw-semibold d-block">
                 {item.label}
               </label>
@@ -418,6 +588,7 @@ export default function FranchiseRegistration() {
             </div>
           ))}
         </div>
+
 
         {/* Username / Password */}
         <div className="row mb-3">
@@ -455,6 +626,31 @@ export default function FranchiseRegistration() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Payment Section */}
+        <div className="mb-4 border rounded p-3 bg-white">
+          <h5 className="fw-bold mb-2">Registration Fee Payment</h5>
+
+          <p className="mb-1">
+            <strong>Amount:</strong> ₹{REGISTRATION_FEE}
+          </p>
+
+          <p className="mb-2">
+            <strong>UPI ID:</strong> {OWNER_UPI_ID}
+          </p>
+
+          <div className="text-center mb-2">
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=demo@upi"
+              alt="UPI QR Code"
+              style={{ maxWidth: 180 }}
+            />
+          </div>
+
+          <small className="text-muted d-block text-center">
+            Scan the QR using any UPI app and complete payment before submitting.
+          </small>
         </div>
 
 

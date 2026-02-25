@@ -6,6 +6,8 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,14 +88,25 @@ export default function Login() {
                 {/* PASSWORD */}
                 <div className="mb-4">
                   <label className="form-label fw-semibold">Password</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    placeholder="Enter password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                    <div className="input-group">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        className="form-control"
+                        placeholder="Enter password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
+                      </button>
+                    </div>
                 </div>
 
                 {/* SUBMIT */}
