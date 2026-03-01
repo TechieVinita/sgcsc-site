@@ -167,30 +167,76 @@ export default function StudentProfile() {
           <h6 className="fw-bold border-bottom pb-2 mb-3">
             Course & Session
           </h6>
-          <table className="table table-bordered mb-4">
-            <tbody>
-              <tr>
-                <th>Course Name</th>
-                <td>{student.courseName || "-"}</td>
-              </tr>
-              <tr>
-                <th>Semester</th>
-                <td>{student.semester ?? "-"}</td>
-              </tr>
-              <tr>
-                <th>Session Start</th>
-                <td>{formatDate(student.sessionStart)}</td>
-              </tr>
-              <tr>
-                <th>Session End</th>
-                <td>{formatDate(student.sessionEnd)}</td>
-              </tr>
-              <tr>
-                <th>Join Date</th>
-                <td>{formatDate(student.joinDate)}</td>
-              </tr>
-            </tbody>
-          </table>
+          
+          {/* Show all enrolled courses */}
+          {student.courses && student.courses.length > 0 ? (
+            student.courses.map((course, index) => (
+              <div key={index} className="mb-3">
+                <h6 className="text-muted">Course {index + 1}</h6>
+                <table className="table table-bordered mb-3">
+                  <tbody>
+                    <tr>
+                      <th>Course Name</th>
+                      <td>{course.courseName || "-"}</td>
+                    </tr>
+                    <tr>
+                      <th>Fee</th>
+                      <td>₹{course.feeAmount || 0}</td>
+                    </tr>
+                    <tr>
+                      <th>Amount Paid</th>
+                      <td>₹{course.amountPaid || 0}</td>
+                    </tr>
+                    <tr>
+                      <th>Pending</th>
+                      <td>
+                        <span className={`badge ${((course.feeAmount || 0) - (course.amountPaid || 0)) > 0 ? 'bg-danger' : 'bg-success'}`}>
+                          ₹{(course.feeAmount || 0) - (course.amountPaid || 0)}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Session Start</th>
+                      <td>{formatDate(course.sessionStart)}</td>
+                    </tr>
+                    <tr>
+                      <th>Session End</th>
+                      <td>{formatDate(course.sessionEnd)}</td>
+                    </tr>
+                    <tr>
+                      <th>Paid?</th>
+                      <td>{yesNoBadge(course.feesPaid)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ))
+          ) : (
+            <table className="table table-bordered mb-4">
+              <tbody>
+                <tr>
+                  <th>Course Name</th>
+                  <td>{student.courseName || "-"}</td>
+                </tr>
+                <tr>
+                  <th>Semester</th>
+                  <td>{student.semester ?? "-"}</td>
+                </tr>
+                <tr>
+                  <th>Session Start</th>
+                  <td>{formatDate(student.sessionStart)}</td>
+                </tr>
+                <tr>
+                  <th>Session End</th>
+                  <td>{formatDate(student.sessionEnd)}</td>
+                </tr>
+                <tr>
+                  <th>Join Date</th>
+                  <td>{formatDate(student.joinDate)}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
 
           {/* ================= FEE DETAILS ================= */}
           <h6 className="fw-bold border-bottom pb-2 mb-3">
