@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import API from "../api/axiosInstance";
+import { jsPDF } from "jspdf";
 
 export default function StudentResultVerification() {
   const [rollNo, setRollNo] = useState("");
@@ -7,7 +8,7 @@ export default function StudentResultVerification() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   // Check if student is logged in
   const studentToken = localStorage.getItem("student_token");
   const isLoggedIn = !!studentToken;
@@ -53,123 +54,213 @@ export default function StudentResultVerification() {
     }
   };
 
+  // Generate PDF for single result
+  const generateResultPDF = (result) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    let y = 20;
+
+    // Header
+    doc.setFillColor(0, 102, 204);
+    doc.rect(0, 0, pageWidth, 35, "F");
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
+    doc.text("RESULT CERTIFICATE", pageWidth / 2, y, { align: "center" });
+    y = 45;
+
+    // Student Info
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text("Student Information", margin, y);
+    y += 8;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Name: ${result.studentName || "-"}`, margin, y);
+    y += 6;
+    doc.text(`Roll Number: ${result.rollNumber || "-"}`, margin, y);
+    y += 6;
+    doc.text(`Course: ${result.courseName || "-"}`, margin, y);
+    y += 6;
+    doc.text(`Exam Session: ${result.examSession || "-"}`, margin, y);
+    y += 6;
+    doc.text(`Exam Date: ${result.examDate ? new Date(result.examDate).toLocaleDateString() : "-"}`, margin, y);
+    y += 12;
+
+    // Subject Marks Table
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Subject Marks", margin, y);
+    y += 8;
+
+    // Table header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, y, pageWidth - 2 * margin, 8, "F");
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Subject", margin + 2, y + 5);
+    doc.text("Max", margin + 70, y + 5);
+    doc.text("Min", margin + 85, y + 5);
+    doc.text("Obtained", margin + 100, y + 5);
+    doc.text("Grade", margin + 125, y + 5);
+    doc.text("Status", margin + 145, y + 5);
+    y += 8;
+
+    // Table rows
+    doc.setFont("helvetica", "normal");
+    if (result.subjects && result.subjects.length > 0) {
+      result.subjects.forEach((sub) => {
+        doc.text(sub.subjectName || "Subject", margin + 2, y + 5);
+        doc.text(String(sub.maxMarks || 0), margin + 70, y + 5);
+        doc.text(String(sub.minMarks || 0), margin + 85, y + 5);
+        doc.text(String(sub.marksObtained || 0), margin + 100, y + 5);
+        doc.text(sub.grade || "-", margin + 125, y + 5);
+        doc.text(sub.status || "-", margin + 145, y + 5);
+        y += 7;
+      });
+    }
+
+    y += 8;
+
+    // Overall Result
+    doc.setFillColor(0, 102, 204);
+    doc.rect(margin, y, pageWidth - 2 * margin, 45, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("OVERALL RESULT", pageWidth / 2, y + 8, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Total Marks: ${result.totalMarks || 0}`, margin + 10, y + 20);
+    doc.text(`Obtained Marks: ${result.totalObtained || 0}`, margin + 80, y + 20);
+    doc.text(`Percentage: ${result.percentage?.toFixed(2) || 0}%`, margin + 10, y + 30);
+    doc.text(`Grade: ${result.overallGrade || "-"}`, margin + 80, y + 30);
+    doc.text(`Status: ${result.resultStatus?.toUpperCase() || "-"}`, margin + 10, y + 40);
+
+    // Footer
+    const footerY = doc.internal.pageSize.getHeight() - 20;
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text("This is a computer-generated document. Verification can be done on the website.", pageWidth / 2, footerY, { align: "center" });
+
+    return doc;
+  };
+
   // Download single result as PDF
   const downloadSingleResult = (result) => {
-    const subjectsList = result.subjects?.map((sub, idx) => `
-${idx + 1}. ${sub.subjectName || 'Subject ' + (idx + 1)}
-   Max Marks: ${sub.maxMarks || 0} | Min Marks: ${sub.minMarks || 0}
-   Marks Obtained: ${sub.marksObtained || 0}
-   Practical: ${sub.practicalMarks || 0}/${sub.maxPracticalMarks || 0}
-   Grade: ${sub.grade || '-'}
-   Status: ${sub.status || '-'}
-`).join('\n') || 'No subjects available';
-
-    const content = `
-===============================================
-              RESULT CERTIFICATE
-===============================================
-
-Student Name     : ${result.studentName || '-'}
-Roll Number      : ${result.rollNumber || '-'}
-Course           : ${result.courseName || '-'}
-
-Exam Session     : ${result.examSession || '-'}
-Exam Date        : ${result.examDate ? new Date(result.examDate).toLocaleDateString() : '-'}
-
------------------------------------------------
-                 MARKS DETAILS
------------------------------------------------
-${subjectsList}
-
------------------------------------------------
-              OVERALL RESULT
------------------------------------------------
-Total Marks      : ${result.totalMarks || 0}
-Obtained Marks   : ${result.totalObtained || 0}
-Percentage       : ${result.percentage?.toFixed(2) || 0}%
-Overall Grade    : ${result.overallGrade || '-'}
-Result Status    : ${result.resultStatus || '-'}
-
-Remarks          : ${result.remarks || '-'}
-
-===============================================
-This is a computer-generated document.
-Verification can be done on the website.
-===============================================
-    `.trim();
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `result_${result.rollNumber}_${result.examSession || 'result'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const doc = generateResultPDF(result);
+    doc.save(`result_${result.rollNumber || "student"}_${result.examSession || "result"}.pdf`);
   };
 
   // Download all results
   const downloadAllResults = () => {
     if (!myResults || myResults.length === 0) return;
 
-    let content = "";
+    const doc = new jsPDF();
 
     myResults.forEach((result, index) => {
-      const subjectsList = result.subjects?.map((sub, idx) => `
-  ${idx + 1}. ${sub.subjectName || 'Subject ' + (idx + 1)}
-     Max Marks: ${sub.maxMarks || 0} | Min Marks: ${sub.minMarks || 0}
-     Marks Obtained: ${sub.marksObtained || 0}
-     Practical: ${sub.practicalMarks || 0}/${sub.maxPracticalMarks || 0}
-     Grade: ${sub.grade || '-'}
-     Status: ${sub.status || '-'}
-`).join('\n') || 'No subjects available';
+      if (index > 0) {
+        doc.addPage();
+      }
 
-      content += `
-===============================================
-         RESULT #${index + 1} OF ${myResults.length}
-===============================================
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      let y = 20;
 
-Student Name     : ${result.studentName || '-'}
-Roll Number      : ${result.rollNumber || '-'}
-Course           : ${result.courseName || '-'}
+      // Header
+      doc.setFillColor(0, 102, 204);
+      doc.rect(0, 0, pageWidth, 35, "F");
+      doc.setFontSize(18);
+      doc.setTextColor(255, 255, 255);
+      doc.text("RESULT CERTIFICATE", pageWidth / 2, y, { align: "center" });
+      y = 45;
 
-Exam Session     : ${result.examSession || '-'}
-Exam Date        : ${result.examDate ? new Date(result.examDate).toLocaleDateString() : '-'}
+      // Page number
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Page ${index + 1} of ${myResults.length}`, pageWidth - margin, 30, { align: "right" });
 
------------------------------------------------
-                 MARKS DETAILS
------------------------------------------------
-${subjectsList}
+      // Student Info
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "bold");
+      doc.text("Student Information", margin, y);
+      y += 8;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Name: ${result.studentName || "-"}`, margin, y);
+      y += 6;
+      doc.text(`Roll Number: ${result.rollNumber || "-"}`, margin, y);
+      y += 6;
+      doc.text(`Course: ${result.courseName || "-"}`, margin, y);
+      y += 6;
+      doc.text(`Exam Session: ${result.examSession || "-"}`, margin, y);
+      y += 6;
+      doc.text(`Exam Date: ${result.examDate ? new Date(result.examDate).toLocaleDateString() : "-"}`, margin, y);
+      y += 12;
 
------------------------------------------------
-              OVERALL RESULT
------------------------------------------------
-Total Marks      : ${result.totalMarks || 0}
-Obtained Marks   : ${result.totalObtained || 0}
-Percentage       : ${result.percentage?.toFixed(2) || 0}%
-Overall Grade    : ${result.overallGrade || '-'}
-Result Status    : ${result.resultStatus || '-'}
+      // Subject Marks Table
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Subject Marks", margin, y);
+      y += 8;
 
-      `;
+      // Table header
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, y, pageWidth - 2 * margin, 8, "F");
+      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Subject", margin + 2, y + 5);
+      doc.text("Max", margin + 70, y + 5);
+      doc.text("Min", margin + 85, y + 5);
+      doc.text("Obtained", margin + 100, y + 5);
+      doc.text("Grade", margin + 125, y + 5);
+      doc.text("Status", margin + 145, y + 5);
+      y += 8;
+
+      // Table rows
+      doc.setFont("helvetica", "normal");
+      if (result.subjects && result.subjects.length > 0) {
+        result.subjects.forEach((sub) => {
+          doc.text(sub.subjectName || "Subject", margin + 2, y + 5);
+          doc.text(String(sub.maxMarks || 0), margin + 70, y + 5);
+          doc.text(String(sub.minMarks || 0), margin + 85, y + 5);
+          doc.text(String(sub.marksObtained || 0), margin + 100, y + 5);
+          doc.text(sub.grade || "-", margin + 125, y + 5);
+          doc.text(sub.status || "-", margin + 145, y + 5);
+          y += 7;
+        });
+      }
+
+      y += 8;
+
+      // Overall Result
+      doc.setFillColor(0, 102, 204);
+      doc.rect(margin, y, pageWidth - 2 * margin, 45, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("OVERALL RESULT", pageWidth / 2, y + 8, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Total Marks: ${result.totalMarks || 0}`, margin + 10, y + 20);
+      doc.text(`Obtained Marks: ${result.totalObtained || 0}`, margin + 80, y + 20);
+      doc.text(`Percentage: ${result.percentage?.toFixed(2) || 0}%`, margin + 10, y + 30);
+      doc.text(`Grade: ${result.overallGrade || "-"}`, margin + 80, y + 30);
+      doc.text(`Status: ${result.resultStatus?.toUpperCase() || "-"}`, margin + 10, y + 40);
     });
 
-    content += `
-===============================================
-This is a computer-generated document.
-All results for this student are included above.
-===============================================
-    `.trim();
+    // Footer on last page
+    const footerY = doc.internal.pageSize.getHeight() - 20;
+    const finalPageWidth = doc.internal.pageSize.getWidth();
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text("This is a computer-generated document. All results are included above.", finalPageWidth / 2, footerY, { align: "center" });
 
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `all_results_${myResults[0]?.rollNumber || 'student'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    doc.save(`all_results_${myResults[0]?.rollNumber || "student"}.pdf`);
   };
 
   // If logged in, show student's own results
@@ -188,9 +279,9 @@ All results for this student are included above.
               <div key={index} className="card shadow-sm mb-4">
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="mb-0">Result #{index + 1}: {result.courseName || 'Course'}</h5>
-                    <button 
-                      className="btn btn-sm btn-outline-primary" 
+                    <h5 className="mb-0">Result #{index + 1}: {result.courseName || "Course"}</h5>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
                       onClick={() => downloadSingleResult(result)}
                     >
                       <i className="bi bi-download me-1"></i> Download
@@ -207,7 +298,7 @@ All results for this student are included above.
                   </div>
                   <div className="row mb-3">
                     <div className="col-md-6">
-                      <p><strong>Exam Session:</strong> {result.examSession || '-'}</p>
+                      <p><strong>Exam Session:</strong> {result.examSession || "-"}</p>
                     </div>
                   </div>
 
@@ -228,15 +319,15 @@ All results for this student are included above.
                       <tbody>
                         {result.subjects?.map((sub, idx) => (
                           <tr key={idx}>
-                            <td>{sub.subjectName || 'Subject ' + (idx + 1)}</td>
+                            <td>{sub.subjectName || "Subject " + (idx + 1)}</td>
                             <td>{sub.maxMarks || 0}</td>
                             <td>{sub.minMarks || 0}</td>
                             <td>{sub.marksObtained || 0}</td>
                             <td>{sub.practicalMarks || 0}/{sub.maxPracticalMarks || 0}</td>
-                            <td>{sub.grade || '-'}</td>
+                            <td>{sub.grade || "-"}</td>
                             <td>
-                              <span className={`badge ${sub.status === 'pass' ? 'bg-success' : sub.status === 'fail' ? 'bg-danger' : 'bg-warning'}`}>
-                                {sub.status || '-'}
+                              <span className={`badge ${sub.status === "pass" ? "bg-success" : sub.status === "fail" ? "bg-danger" : "bg-warning"}`}>
+                                {sub.status || "-"}
                               </span>
                             </td>
                           </tr>
@@ -259,13 +350,13 @@ All results for this student are included above.
                   </div>
                   <div className="row">
                     <div className="col-md-4">
-                      <p><strong>Overall Grade:</strong> {result.overallGrade || '-'}</p>
+                      <p><strong>Overall Grade:</strong> {result.overallGrade || "-"}</p>
                     </div>
                     <div className="col-md-4">
                       <p>
                         <strong>Result Status:</strong>{" "}
-                        <span className={`badge ${result.resultStatus === 'pass' ? 'bg-success' : result.resultStatus === 'fail' ? 'bg-danger' : 'bg-warning'}`}>
-                          {result.resultStatus || '-'}
+                        <span className={`badge ${result.resultStatus === "pass" ? "bg-success" : result.resultStatus === "fail" ? "bg-danger" : "bg-warning"}`}>
+                          {result.resultStatus || "-"}
                         </span>
                       </p>
                     </div>
@@ -303,7 +394,7 @@ All results for this student are included above.
         <input type="date" className="form-control mb-3"
           value={dob} onChange={(e) => setDob(e.target.value)} />
         <button className="btn btn-primary" disabled={loading}>
-          {loading ? 'Verifying...' : 'Verify'}
+          {loading ? "Verifying..." : "Verify"}
         </button>
       </form>
 
