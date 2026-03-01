@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import API from "../api/axiosInstance";
 
+// Default avatar SVG for students without a photo
+const DEFAULT_AVATAR_SVG =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="40" fill="#a0a0a0"/>
+      <circle cx="40" cy="30" r="14" fill="#e0e0e0"/>
+      <path d="M20 68 Q40 45 60 68" fill="#e0e0e0"/>
+    </svg>`
+  );
+
 export default function StudentProfile() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,13 +77,13 @@ export default function StudentProfile() {
           <div className="row mb-4 align-items-center">
             <div className="col-md-3 text-center">
               <img
-                src={
-                  student.photo ||
-                  "https://via.placeholder.com/150?text=No+Photo"
-                }
+                src={student.photo || DEFAULT_AVATAR_SVG}
                 alt="Student"
                 className="img-fluid rounded border"
                 style={{ maxHeight: "150px" }}
+                onError={(e) => {
+                  e.currentTarget.src = DEFAULT_AVATAR_SVG;
+                }}
               />
             </div>
             <div className="col-md-9">

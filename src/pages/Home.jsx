@@ -30,9 +30,18 @@ import "./Home.css";
 /* =====================
    SAFE IMAGE COMPONENT
    ===================== */
-const SafeImg = ({ src, alt = "", ...props }) => {
-  const fallback = "/images/no-image.png";
+// Default avatar SVG for students without a photo
+const DEFAULT_AVATAR_SVG =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="40" fill="#a0a0a0"/>
+      <circle cx="40" cy="30" r="14" fill="#e0e0e0"/>
+      <path d="M20 68 Q40 45 60 68" fill="#e0e0e0"/>
+    </svg>`
+  );
 
+const SafeImg = ({ src, alt = "", fallback = DEFAULT_AVATAR_SVG, ...props }) => {
   return (
     <img
       src={src || fallback}

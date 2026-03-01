@@ -28,4 +28,11 @@ export const getCourses = async () => {
   return Array.isArray(res.data?.data) ? res.data.data : [];
 };
 
+/* ===== SETTINGS ===== */
+
+export const getSettings = async () => {
+  const res = await API.get("/settings");
+  return res.data?.data || null;
+};
+
 export default API;

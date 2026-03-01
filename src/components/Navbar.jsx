@@ -80,11 +80,13 @@ const getFallbackAvatar = (seed = "user") =>
                   Franchise
                 </span>
                 <ul className="dropdown-menu">
-                  <li>
-                    <NavLink className="dropdown-item" to="/franchise-registration">
-                      Franchise Registration
-                    </NavLink>
-                  </li>
+                  {!franchiseToken && (
+                    <li>
+                      <NavLink className="dropdown-item" to="/franchise-registration">
+                        Franchise Registration
+                      </NavLink>
+                    </li>
+                  )}
                   <li>
                     <NavLink className="dropdown-item" to="/franchise-verification">
                       Franchise Verification

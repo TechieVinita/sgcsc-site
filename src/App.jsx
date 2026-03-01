@@ -3,6 +3,7 @@ import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import SocialStickyBar from './components/SocialStickyBar';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -63,6 +64,7 @@ export default function App() {
     <Router>
       <div className="d-flex flex-column min-vh-100">
         <Navbar />
+        <SocialStickyBar />
 
         <div className="flex-grow-1">
           <Suspense fallback={<div className="text-center py-5">Loading...</div>}>
