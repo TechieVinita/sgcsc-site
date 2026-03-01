@@ -59,8 +59,6 @@ const extractArray = (data) => {
 
 export default function Home() {
   const [recentStudents, setRecentStudents] = useState([]);
-  const [certifiedStudents, setCertifiedStudents] = useState([]);
-  const [members, setMembers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -79,21 +77,15 @@ export default function Home() {
       try {
         const [
           recentRes,
-          certifiedRes,
-          membersRes,
           affRes,
         ] = await Promise.all([
           api.get("/students/recent-home"),
-          api.get("/students/certified-home"),
-          api.get("/members"),
           api.get("/gallery", { params: { category: "affiliation" } }),
         ]);
 
         if (!active) return;
 
         setRecentStudents(extractArray(recentRes.data));
-        setCertifiedStudents(extractArray(certifiedRes.data));
-        setMembers(extractArray(membersRes.data));
         setAffiliations(extractArray(affRes.data));
       } catch (err) {
         if (active) {
