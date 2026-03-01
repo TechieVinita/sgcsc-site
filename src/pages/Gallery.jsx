@@ -69,7 +69,7 @@ if (items.length === 0) {
     };
 
     fetchGallery();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="container my-5">

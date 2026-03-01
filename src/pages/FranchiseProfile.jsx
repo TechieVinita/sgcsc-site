@@ -41,14 +41,13 @@ const docLink = (label, url) =>
 export default function FranchiseProfile() {
   const [franchise, setFranchise] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     API.get("/franchise-profile/me")
       .then((res) => {
         setFranchise(res.data?.data || res.data);
       })
-      .catch(() => setError("Unable to load franchise profile"))
+      .catch(() => console.error("Unable to load franchise profile"))
       .finally(() => setLoading(false));
   }, []);
 

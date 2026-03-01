@@ -124,24 +124,6 @@ const recentItems = recentStudents.slice(0, 5).map((s) => ({
   img: s.photo, // Cloudinary URL
 }));
 
-
-const certifiedItems = certifiedStudents.slice(0, 5).map((s) => ({
-  name: s.name,
-  subtitle: "Certified student",
-  img: s.photo,
-}));
-
-
-  const memberItems = members
-    .filter((m) => m.isActive !== false)
-    .sort((a, b) => (a.order || 0) - (b.order || 0))
-    .slice(0, 5)
-    .map((m) => ({
-      name: m.name,
-      subtitle: m.designation || "",
-      img: m.photoUrl,
-    }));
-
   const affiliationItems = affiliations.slice(0, 5).map((a) => ({
     id: a._id,
     // name: a.title || "Affiliation",

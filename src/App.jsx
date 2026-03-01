@@ -40,9 +40,7 @@ const FranchiseList = lazy(() => import('./pages/FranchiseList'));
 const FranchiseRegistration = lazy(() => import('./pages/FranchiseRegistration'));
 const StudyCenterList = lazy(() => import('./pages/StudyCenterList'));
 const AdmitCard = lazy(() => import('./pages/AdmitCard'));
-// const StudentLogin = lazy(() => import('./pages/StudentLogin'));
-const StudentSignup = lazy(() => import('./pages/StudentSignup'));
-// const FranchiseLogin = lazy(() => import('./pages/FranchiseLogin'));
+
 const LongTermCourses = lazy(() => import('./pages/LongTermCourses'));
 const ShortTermCourses = lazy(() => import('./pages/ShortTermCourses'));
 const CertificateCourses = lazy(() => import('./pages/CertificateCourses'));

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import API from "../api/axiosInstance";
-import Hero from '../components/HeroSection'; // optional hero banner
 
 
 export default function LongTermCourses() {
