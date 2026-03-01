@@ -192,6 +192,35 @@ export default function StudentProfile() {
             </tbody>
           </table>
 
+          {/* ================= FEE DETAILS ================= */}
+          <h6 className="fw-bold border-bottom pb-2 mb-3">
+            Fee Details
+          </h6>
+          <table className="table table-bordered mb-4">
+            <tbody>
+              <tr>
+                <th>Total Fee</th>
+                <td>₹{student.feeAmount || 0}</td>
+              </tr>
+              <tr>
+                <th>Amount Paid</th>
+                <td>₹{student.amountPaid || 0}</td>
+              </tr>
+              <tr>
+                <th>Pending Amount</th>
+                <td>
+                  <span className={`badge ${(student.pendingAmount || 0) > 0 ? 'bg-danger' : 'bg-success'}`}>
+                    ₹{student.pendingAmount || 0}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <th>Payment Status</th>
+                <td>{yesNoBadge(student.feesPaid)}</td>
+              </tr>
+            </tbody>
+          </table>
+
           {/* ================= ACCOUNT / STATUS ================= */}
           <h6 className="fw-bold border-bottom pb-2 mb-3">
             Account & Status
@@ -201,10 +230,6 @@ export default function StudentProfile() {
               <tr>
                 <th>Username</th>
                 <td>{student.username || "-"}</td>
-              </tr>
-              <tr>
-                <th>Fees Paid</th>
-                <td>{yesNoBadge(student.feesPaid)}</td>
               </tr>
               <tr>
                 <th>Certified</th>
