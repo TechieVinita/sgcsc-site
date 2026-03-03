@@ -33,7 +33,7 @@ export default function Login() {
 
         localStorage.setItem("franchise_token", res.data.token);
         localStorage.setItem("user_role", "franchise");
-        window.location.href = "/franchise/profile";
+        window.location.href = "/franchise/dashboard";
       }
     } catch (err) {
       setError(err.response?.data?.message || "Invalid credentials");

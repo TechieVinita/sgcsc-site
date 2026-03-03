@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import CreditBadge from "./CreditBadge";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -152,6 +153,9 @@ const getFallbackAvatar = (seed = "user") =>
               </NavLink>
             )}
 
+            {/* Credit Badge for Franchise Users */}
+            {role === "franchise" && <div className="ms-3"><CreditBadge /></div>}
+
             {isLoggedIn && (
               <div className="dropdown ms-3">
                 <img
@@ -173,6 +177,14 @@ const getFallbackAvatar = (seed = "user") =>
                       My Profile
                     </NavLink>
                   </li>
+                  {role === "franchise" && (
+                    <li>
+                      <NavLink className="dropdown-item" to="/franchise/credits">
+                        <i className="bi bi-credit-card-2-front me-2"></i>
+                        My Credits
+                      </NavLink>
+                    </li>
+                  )}
                   <li>
                     <button
                       className="dropdown-item text-danger"

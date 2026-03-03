@@ -35,4 +35,38 @@ export const getSettings = async () => {
   return res.data?.data || null;
 };
 
+/* ===== CREDITS (Franchise) ===== */
+
+export const getMyCredits = async () => {
+  const res = await API.get("/credits/my-credits");
+  return res.data?.data || null;
+};
+
+export const getMyTransactions = async (limit = 10) => {
+  const res = await API.get(`/credits/my-transactions?limit=${limit}`);
+  return res.data?.data?.transactions || [];
+};
+
+export const getTopupInfo = async () => {
+  const res = await API.get("/credits/topup-info");
+  return res.data?.data || null;
+};
+
+export const getCreditPricing = async () => {
+  const res = await API.get("/credits/pricing");
+  return res.data?.data || null;
+};
+
+/* ===== FRANCHISE PROFILE ===== */
+
+export const getFranchiseProfile = async () => {
+  const res = await API.get("/franchise-profile/me");
+  return res.data?.data || null;
+};
+
+export const getFranchiseStats = async () => {
+  const res = await API.get("/franchise-profile/stats");
+  return res.data?.data || null;
+};
+
 export default API;

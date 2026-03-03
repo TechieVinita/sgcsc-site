@@ -10,6 +10,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import './index.css';
 
 import FranchiseProfile from "./pages/FranchiseProfile";
+import FranchiseCredits from "./pages/FranchiseCredits";
+import FranchiseDashboard from "./pages/FranchiseDashboard";
 import FranchiseProtectedRoute from "./components/FranchiseProtectedRoute";
 
 
@@ -148,10 +150,28 @@ export default function App() {
               <Route path="/admit-card" element={<AdmitCard />} />
 
 <Route
+  path="/franchise/dashboard"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseDashboard />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
   path="/franchise/profile"
   element={
     <FranchiseProtectedRoute>
       <FranchiseProfile />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/credits"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseCredits />
     </FranchiseProtectedRoute>
   }
 />

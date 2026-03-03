@@ -15,15 +15,30 @@ const api = axios.create({
 /* ===================== REQUEST INTERCEPTOR ===================== */
 api.interceptors.request.use(
   (config) => {
-    // Priority-based token resolution
-    const token =
-      localStorage.getItem("admin_token") ||
-      localStorage.getItem("franchise_token") ||
-      localStorage.getItem("student_token") ||
-      localStorage.getItem("token");
+    // Franchise token takes priority for franchise-specific routes
+    const franchiseToken = localStorage.getItem("franchise_token");
+    const path = config.url || "";
+    
+    // For franchise-specific routes, use franchise token
+    if (
+      path.includes("/credits/") ||
+      path.includes("/franchise-profile/") ||
+      (path.includes("/franchise/") && franchiseToken)
+    ) {
+      if (franchiseToken) {
+        config.headers.Authorization = `Bearer ${franchiseToken}`;
+      }
+    } else {
+      // Priority-based token resolution for other routes
+      const token =
+        localStorage.getItem("admin_token") ||
+        localStorage.getItem("franchise_token") ||
+        localStorage.getItem("student_token") ||
+        localStorage.getItem("token");
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     // Let browser handle multipart/form-data headers
