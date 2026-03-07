@@ -1,0 +1,641 @@
+// src/pages/FranchiseAddResults.jsx
+import { useEffect, useState, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import API from "../api/axiosInstance";
+import Sidebar from "./FranchiseDashboard";
+
+export default function FranchiseAddResults() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const resultId = params.get("id");
+  const isEditMode = Boolean(resultId);
+
+  // Data lists
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [allSubjects, setAllSubjects] = useState([]);
+
+  // Loading states
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [franchise, setFranchise] = useState(null);
+
+  // Form selections
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("");
+
+  // Subject marks - keyed by subjectId
+  const [subjectMarks, setSubjectMarks] = useState({});
+
+  // Messages
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
+
+  // Exam info
+  const [examSession, setExamSession] = useState("");
+  const [examDate, setExamDate] = useState("");
+  const [remarks, setRemarks] = useState("");
+
+  // Get franchise info
+  useEffect(() => {
+    const fetchFranchise = async () => {
+      try {
+        const res = await API.get("/franchise-profile/me");
+        setFranchise(res.data?.data || null);
+      } catch (err) {
+        console.error("fetchFranchise error:", err);
+      }
+    };
+    fetchFranchise();
+  }, []);
+
+  /* ================= FETCH STUDENTS (FRANCHISE'S OWN STUDENTS) ================= */
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoadingStudents(true);
+      try {
+        const res = await API.get("/franchise/students");
+        const list = Array.isArray(res.data) ? res.data : [];
+        setStudents(list);
+      } catch (err) {
+        console.error("fetch students error:", err);
+        setMessageType("danger");
+        setMessage("Failed to load students list");
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  /* ================= FETCH COURSES ================= */
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+      try {
+        const res = await API.get("/franchise/courses");
+        const list = Array.isArray(res.data) ? res.data : [];
+        setCourses(list);
+      } catch (err) {
+        console.error("fetch courses error:", err);
+        setMessageType("danger");
+        setMessage("Failed to load courses list");
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  /* ================= FETCH SUBJECTS ================= */
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      setLoadingSubjects(true);
+      try {
+        const res = await API.get("/franchise/subjects");
+        const list = Array.isArray(res.data) ? res.data : [];
+        setAllSubjects(list);
+      } catch (err) {
+        console.error("fetch subjects error:", err);
+        setMessageType("danger");
+        setMessage("Failed to load subjects");
+      } finally {
+        setLoadingSubjects(false);
+      }
+    };
+
+    fetchSubjects();
+  }, []);
+
+  /* ================= LOAD EXISTING RESULT FOR EDIT ================= */
+  useEffect(() => {
+    if (!isEditMode || !resultId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchResult = async () => {
+      setLoading(true);
+      try {
+        const res = await API.get(`/franchise/results/${resultId}`);
+        const result = res.data;
+        
+        if (result) {
+          setSelectedStudent(result.student?._id || result.student || "");
+          setSelectedCourse(
+            typeof result.course === "object" 
+              ? result.course._id 
+              : result.course || ""
+          );
+          setExamSession(result.examSession || "");
+          setExamDate(result.examDate ? result.examDate.split("T")[0] : "");
+          setRemarks(result.remarks || "");
+
+          // Initialize subject marks
+          if (result.subjects && result.subjects.length > 0) {
+            const marks = {};
+            result.subjects.forEach((sub) => {
+              const subjectId = typeof sub.subject === "object" ? sub.subject._id : sub.subject;
+              marks[subjectId] = {
+                marksObtained: sub.marksObtained || "",
+                practicalMarks: sub.practicalMarks || ""
+              };
+            });
+            setSubjectMarks(marks);
+          }
+        }
+      } catch (err) {
+        console.error("fetch result error:", err);
+        setMessageType("danger");
+        setMessage("Failed to load result");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResult();
+  }, [isEditMode, resultId]);
+
+  /* ================= FILTER SUBJECTS BY COURSE (CLIENT-SIDE) ================= */
+  const getSubjectCourseId = (s) =>
+    typeof s.course === "object"
+      ? String(s.course._id)
+      : String(s.course || s.courseId || "");
+
+  const subjects = useMemo(() => {
+    if (!selectedCourse) return [];
+    return allSubjects.filter(
+      (s) => getSubjectCourseId(s) === selectedCourse
+    );
+  }, [allSubjects, selectedCourse]);
+
+  /* ================= INITIALIZE MARKS WHEN SUBJECTS CHANGE ================= */
+  useEffect(() => {
+    if (isEditMode) return; // Don't auto-initialize in edit mode
+    if (!selectedCourse) return;
+    
+    const initialMarks = {};
+    subjects.forEach((sub) => {
+      if (!subjectMarks[sub._id]) {
+        initialMarks[sub._id] = {
+          marksObtained: "",
+          practicalMarks: ""
+        };
+      }
+    });
+    if (Object.keys(initialMarks).length > 0) {
+      setSubjectMarks((prev) => ({ ...prev, ...initialMarks }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCourse, subjects]);
+
+  /* ================= GET SELECTED STUDENT INFO ================= */
+  const getSelectedStudentInfo = () => {
+    return students.find((s) => s._id === selectedStudent);
+  };
+
+  /* ================= HANDLE MARKS CHANGE ================= */
+  const handleMarksChange = (subjectId, field, value) => {
+    setSubjectMarks((prev) => ({
+      ...prev,
+      [subjectId]: {
+        ...prev[subjectId],
+        [field]: value
+      }
+    }));
+  };
+
+  /* ================= VALIDATION ================= */
+  const validate = () => {
+    if (!selectedStudent) {
+      setMessageType("danger");
+      setMessage("Please select a student.");
+      return false;
+    }
+
+    if (!selectedCourse) {
+      setMessageType("danger");
+      setMessage("Please select a course.");
+      return false;
+    }
+
+    if (subjects.length === 0) {
+      setMessageType("danger");
+      setMessage("No subjects found for this course.");
+      return false;
+    }
+
+    // Check if at least one subject has marks entered
+    const hasMarks = subjects.some((sub) => {
+      const marks = subjectMarks[sub._id];
+      return marks && (marks.marksObtained !== "" || marks.practicalMarks !== "");
+    });
+
+    if (!hasMarks) {
+      setMessageType("danger");
+      setMessage("Please enter marks for at least one subject.");
+      return false;
+    }
+
+    return true;
+  };
+
+  /* ================= SUBMIT ================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    if (!validate()) return;
+
+    setSaving(true);
+    try {
+      const studentInfo = getSelectedStudentInfo();
+
+      // Build subjects array with marks
+      const subjectsPayload = subjects
+        .filter((sub) => {
+          const marks = subjectMarks[sub._id];
+          return marks && (marks.marksObtained !== "" || marks.practicalMarks !== "");
+        })
+        .map((sub) => ({
+          subject: sub._id,
+          subjectName: sub.name,
+          maxMarks: sub.maxMarks || 100,
+          minMarks: sub.minMarks || 0,
+          marksObtained: Number(subjectMarks[sub._id]?.marksObtained) || 0,
+          practicalMarks: Number(subjectMarks[sub._id]?.practicalMarks) || 0
+        }));
+
+      const payload = {
+        student: selectedStudent,
+        rollNumber: studentInfo?.rollNumber || "",
+        enrollmentNumber: studentInfo?.enrollmentNo || "",
+        dob: studentInfo?.dob || null,
+        course: selectedCourse,
+        subjects: subjectsPayload,
+        examSession,
+        examDate,
+        remarks
+      };
+
+      if (isEditMode && resultId) {
+        await API.put(`/franchise/results/${resultId}`, payload);
+        setMessageType("success");
+        setMessage("Result updated successfully!");
+      } else {
+        await API.post("/franchise/results", payload);
+        setMessageType("success");
+        setMessage("Result added successfully!");
+      }
+
+      setTimeout(() => {
+        navigate("/franchise/results");
+      }, 1000);
+    } catch (err) {
+      console.error("add result error:", err);
+      setMessageType("danger");
+      setMessage(err.response?.data?.message || err.userMessage || "Failed to save result");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ================= CALCULATE TOTALS ================= */
+  const calculateTotals = () => {
+    let totalMax = 0;
+    let totalObtained = 0;
+
+    subjects.forEach((sub) => {
+      const maxMarks = sub.maxMarks || 100;
+      const maxPractical = sub.maxPracticalMarks || 0;
+      totalMax += maxMarks + maxPractical;
+
+      const marks = subjectMarks[sub._id];
+      if (marks) {
+        totalObtained += (Number(marks.marksObtained) || 0) + (Number(marks.practicalMarks) || 0);
+      }
+    });
+
+    const percentage = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(2) : 0;
+
+    return { totalMax, totalObtained, percentage };
+  };
+
+  const totals = calculateTotals();
+
+  if (loading) {
+    return (
+      <div className="d-flex">
+        <Sidebar franchise={franchise} />
+        <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
+          <div className="d-flex justify-content-center align-items-center py-5">
+            <div className="spinner-border text-primary me-2" />
+            Loading…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="d-flex">
+      <Sidebar franchise={franchise} />
+      <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h2 className="fw-bold mb-1">
+              {isEditMode ? "Edit Result" : "Add Result"}
+            </h2>
+            <small className="text-muted">
+              {isEditMode 
+                ? "Update student result." 
+                : "Adding a result will deduct credits from your account."}
+            </small>
+          </div>
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => navigate("/franchise/results")}
+            disabled={saving}
+          >
+            Back to Results
+          </button>
+        </div>
+
+        {message && (
+          <div className={`alert alert-${messageType}`} role="alert">
+            {message}
+          </div>
+        )}
+
+        <div className="row">
+          {/* Main Form */}
+          <div className="col-lg-8">
+            <div className="card shadow-sm mb-4">
+              <div className="card-header bg-white">
+                <h5 className="mb-0">Student & Course Selection</h5>
+              </div>
+              <div className="card-body">
+                <form onSubmit={handleSubmit}>
+                  {/* Student Selection */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Select Student <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      className="form-select"
+                      value={selectedStudent}
+                      onChange={(e) => {
+                        setSelectedStudent(e.target.value);
+                        // Auto-select course if student has one
+                        const student = students.find(s => s._id === e.target.value);
+                        if (student?.courseId) {
+                          setSelectedCourse(student.courseId);
+                        }
+                      }}
+                      disabled={loadingStudents || isEditMode}
+                      required
+                    >
+                      <option value="">
+                        {loadingStudents ? "Loading students..." : "Select a student"}
+                      </option>
+                      {students.map((s) => (
+                        <option key={s._id} value={s._id}>
+                          {s.name} ({s.rollNumber}) - {s.courseName || "No Course"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Course Selection */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Select Course <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      className="form-select"
+                      value={selectedCourse}
+                      onChange={(e) => {
+                        setSelectedCourse(e.target.value);
+                        setSubjectMarks({}); // Reset marks when course changes
+                      }}
+                      disabled={loadingCourses}
+                      required
+                    >
+                      <option value="">
+                        {loadingCourses ? "Loading courses..." : "Select a course"}
+                      </option>
+                      {courses.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.title || c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Exam Info */}
+                  <div className="row mb-3">
+                    <div className="col-md-6">
+                      <label className="form-label">Exam Session</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="e.g., 2024-25"
+                        value={examSession}
+                        onChange={(e) => setExamSession(e.target.value)}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Exam Date</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={examDate}
+                        onChange={(e) => setExamDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Subject Marks Table */}
+                  {selectedCourse && (
+                    <div className="border-top pt-4 mt-4">
+                      <h5 className="mb-3">
+                        Subject Marks
+                        {loadingSubjects && (
+                          <span className="badge bg-secondary ms-2">Loading...</span>
+                        )}
+                      </h5>
+
+                      {subjects.length > 0 ? (
+                        <div className="table-responsive">
+                          <table className="table table-bordered">
+                            <thead className="table-light">
+                              <tr>
+                                <th style={{ width: "40%" }}>Subject</th>
+                                <th className="text-center" style={{ width: "15%" }}>Max Marks</th>
+                                <th className="text-center" style={{ width: "15%" }}>Obtained</th>
+                                <th className="text-center" style={{ width: "15%" }}>Practical</th>
+                                <th className="text-center" style={{ width: "15%" }}>Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {subjects.map((sub) => {
+                                const marks = subjectMarks[sub._id] || {};
+                                const obtained = Number(marks.marksObtained) || 0;
+                                const practical = Number(marks.practicalMarks) || 0;
+                                const total = obtained + practical;
+
+                                return (
+                                  <tr key={sub._id}>
+                                    <td>
+                                      <strong>{sub.name}</strong>
+                                    </td>
+                                    <td className="text-center">{sub.maxMarks || 100}</td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        className="form-control text-center"
+                                        placeholder="0"
+                                        value={marks.marksObtained || ""}
+                                        onChange={(e) =>
+                                          handleMarksChange(sub._id, "marksObtained", e.target.value)
+                                        }
+                                        min="0"
+                                        max={sub.maxMarks || 100}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        className="form-control text-center"
+                                        placeholder="0"
+                                        value={marks.practicalMarks || ""}
+                                        onChange={(e) =>
+                                          handleMarksChange(sub._id, "practicalMarks", e.target.value)
+                                        }
+                                        min="0"
+                                      />
+                                    </td>
+                                    <td className="text-center">
+                                      <strong>{total}</strong>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot className="table-secondary">
+                              <tr>
+                                <th colSpan="2" className="text-end">Total:</th>
+                                <th className="text-center">{totals.totalMax}</th>
+                                <th></th>
+                                <th className="text-center">{totals.totalObtained}</th>
+                              </tr>
+                              <tr>
+                                <th colSpan="3" className="text-end">Percentage:</th>
+                                <th colSpan="2" className="text-center">
+                                  <span className={totals.percentage >= 40 ? "text-success" : "text-danger"}>
+                                    {totals.percentage}%
+                                  </span>
+                                </th>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      ) : (
+                        !loadingSubjects && (
+                          <div className="alert alert-warning">
+                            No subjects found for this course. Please add subjects to this course first.
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+
+                  {/* Remarks */}
+                  <div className="mb-3 mt-4">
+                    <label className="form-label">Remarks</label>
+                    <textarea
+                      className="form-control"
+                      rows="2"
+                      placeholder="Any additional remarks..."
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-100 py-2"
+                    disabled={saving || subjects.length === 0}
+                  >
+                    {saving ? "Saving..." : isEditMode ? "Update Result" : "Save Result"}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar - Selected Student Info */}
+          <div className="col-lg-4">
+            {selectedStudent && (
+              <div className="card shadow-sm">
+                <div className="card-header bg-primary text-white">
+                  <h5 className="mb-0">Student Details</h5>
+                </div>
+                <div className="card-body">
+                  {(() => {
+                    const student = getSelectedStudentInfo();
+                    if (!student) return null;
+                    return (
+                      <>
+                        {student.photo && (
+                          <div className="text-center mb-3">
+                            <img
+                              src={student.photo}
+                              alt={student.name}
+                              className="rounded-circle"
+                              style={{
+                                width: "80px",
+                                height: "80px",
+                                objectFit: "cover"
+                              }}
+                            />
+                          </div>
+                        )}
+                        <p>
+                          <strong>Name:</strong> {student.name}
+                        </p>
+                        <p>
+                          <strong>Roll No:</strong> {student.rollNumber}
+                        </p>
+                        <p>
+                          <strong>Course:</strong> {student.courseName || "N/A"}
+                        </p>
+                        {student.fatherName && (
+                          <p>
+                            <strong>Father's Name:</strong> {student.fatherName}
+                          </p>
+                        )}
+                        {student.mobile && (
+                          <p>
+                            <strong>Mobile:</strong> {student.mobile}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

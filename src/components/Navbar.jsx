@@ -54,28 +54,40 @@ const getFallbackAvatar = (seed = "user") =>
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
 
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/">Home</NavLink>
-            </li>
+            {/* Dashboard - Only shown for logged in franchise users */}
+            {role === "franchise" ? (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/franchise/dashboard">Dashboard</NavLink>
+              </li>
+            ) : (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/">Home</NavLink>
+              </li>
+            )}
 
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/about">About Company</NavLink>
-            </li>
+            {/* About Company - Hidden for franchise users */}
+            {role !== "franchise" && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/about">About Company</NavLink>
+              </li>
+            )}
 
-            {/* Courses */}
-            <li className="nav-item dropdown">
-              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                Our Courses
-              </span>
-              <ul className="dropdown-menu">
-                <li><NavLink className="dropdown-item" to="/long-term-courses">Long Term Courses</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/short-term-courses">Short Term Courses</NavLink></li>
-                <li><NavLink className="dropdown-item" to="/certificate-courses">Certificate Courses</NavLink></li>
-              </ul>
-            </li>
+            {/* Courses - Hidden for franchise users */}
+            {role !== "franchise" && (
+              <li className="nav-item dropdown">
+                <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                  Our Courses
+                </span>
+                <ul className="dropdown-menu">
+                  <li><NavLink className="dropdown-item" to="/long-term-courses">Long Term Courses</NavLink></li>
+                  <li><NavLink className="dropdown-item" to="/short-term-courses">Short Term Courses</NavLink></li>
+                  <li><NavLink className="dropdown-item" to="/certificate-courses">Certificate Courses</NavLink></li>
+                </ul>
+              </li>
+            )}
 
-            {/* Franchise (NO LOGIN HERE) */}
-            {(!role || role === "franchise") && (
+            {/* Franchise - Hidden for franchise users (they see dashboard instead) */}
+            {(!role || role === "franchise") && role !== "franchise" && (
               <li className="nav-item dropdown">
                 <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                   Franchise
@@ -102,8 +114,8 @@ const getFallbackAvatar = (seed = "user") =>
               </li>
             )}
 
-            {/* Student (NO PROFILE HERE) */}
-            {(!role || role === "student") && (
+            {/* Student - Hidden for franchise users */}
+            {(!role || role === "student") && role !== "franchise" && (
               <li className="nav-item dropdown">
                 <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                   Student
@@ -138,9 +150,12 @@ const getFallbackAvatar = (seed = "user") =>
             )}
 
 
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/gallery">Gallery</NavLink>
-            </li>
+            {/* Gallery - Hidden for franchise users */}
+            {role !== "franchise" && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/gallery">Gallery</NavLink>
+              </li>
+            )}
 
             <li className="nav-item">
               <NavLink className="nav-link" to="/contact">Contact</NavLink>
@@ -172,6 +187,14 @@ const getFallbackAvatar = (seed = "user") =>
                 />
 
                 <ul className="dropdown-menu dropdown-menu-end">
+                  {role === "franchise" && (
+                    <li>
+                      <NavLink className="dropdown-item" to="/franchise/dashboard">
+                        <i className="bi bi-speedometer2 me-2"></i>
+                        Dashboard
+                      </NavLink>
+                    </li>
+                  )}
                   <li>
                     <NavLink className="dropdown-item" to={profileLink}>
                       My Profile

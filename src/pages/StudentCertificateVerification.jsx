@@ -1,11 +1,12 @@
+// src/pages/StudentCertificateVerification.jsx
 import { useState, useEffect } from "react";
 import API from "../api/axiosInstance";
 import { jsPDF } from "jspdf";
 
 export default function StudentCertificateVerification() {
-  const [certificateNo, setCertificateNo] = useState("");
+  const [enrollmentNumber, setEnrollmentNumber] = useState("");
   const [dob, setDob] = useState("");
-  const [result, setResult] = useState(null);
+  const [certificate, setCertificate] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -41,23 +42,25 @@ export default function StudentCertificateVerification() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setResult(null);
+    setCertificate(null);
     setLoading(true);
 
     try {
       const res = await API.post("/public/certificate", {
-        certificateNo,
+        enrollmentNumber,
         dob,
       });
-      setResult(res.data.data);
+      // Handle both single certificate and array of certificates
+      const data = res.data.data;
+      setCertificate(Array.isArray(data) ? data : [data]);
     } catch {
-      setError("Certificate not found.");
+      setError("Certificate not found. Please check your enrollment number and date of birth.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Generate PDF for single certificate
+  // Generate PDF for certificate
   const generateCertificatePDF = (cert) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -136,21 +139,23 @@ export default function StudentCertificateVerification() {
     return doc;
   };
 
-  // Download single certificate as PDF
-  const downloadSingleCertificate = (cert) => {
+  // Download certificate as PDF
+  const downloadCertificate = (cert) => {
     const doc = generateCertificatePDF(cert);
-    doc.save(`certificate_${cert.certificateNumber || "student"}.pdf`);
+    doc.save(`certificate_${cert.enrollmentNumber || cert.certificateNumber || "student"}.pdf`);
   };
 
-  // Download all certificates
-  const downloadAllCertificates = () => {
-    if (!myCertificates || myCertificates.length === 0) return;
+  // Download all certificates (for both logged in users and public verification)
+  const downloadAllCertificates = (certs) => {
+    // Use provided certs or fall back to myCertificates (for logged in users)
+    const certificates = certs || myCertificates;
+    if (!certificates || certificates.length === 0) return;
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
 
-    myCertificates.forEach((cert, index) => {
+    certificates.forEach((cert, index) => {
       if (index > 0) {
         doc.addPage();
       }
@@ -257,7 +262,7 @@ export default function StudentCertificateVerification() {
                     </div>
                     <button
                       className="btn btn-sm btn-outline-primary"
-                      onClick={() => downloadSingleCertificate(cert)}
+                      onClick={() => downloadCertificate(cert)}
                     >
                       <i className="bi bi-download me-1"></i> Download
                     </button>
@@ -309,7 +314,7 @@ export default function StudentCertificateVerification() {
 
             {myCertificates.length > 1 && (
               <div className="text-center mt-4">
-                <button className="btn btn-primary" onClick={downloadAllCertificates}>
+                <button className="btn btn-primary" onClick={() => downloadAllCertificates()}>
                   <i className="bi bi-download me-2"></i>
                   Download All Certificates
                 </button>
@@ -329,24 +334,105 @@ export default function StudentCertificateVerification() {
   return (
     <div className="container my-5">
       <h2 className="text-center mb-4">Certificate Verification</h2>
+      <p className="text-center text-muted mb-4">
+        Enter your enrollment number and date of birth to verify and download your certificate
+      </p>
 
       <form onSubmit={handleSubmit} className="card p-4 mx-auto" style={{ maxWidth: 500 }}>
-        <input className="form-control mb-3" placeholder="Certificate No"
-          value={certificateNo} onChange={(e) => setCertificateNo(e.target.value)} />
-        <input type="date" className="form-control mb-3"
-          value={dob} onChange={(e) => setDob(e.target.value)} />
-        <button className="btn btn-primary" disabled={loading}>
-          {loading ? "Verifying..." : "Verify"}
+        <div className="mb-3">
+          <label className="form-label">Enrollment Number</label>
+          <input 
+            className="form-control" 
+            placeholder="Enter your enrollment number"
+            value={enrollmentNumber} 
+            onChange={(e) => setEnrollmentNumber(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Date of Birth</label>
+          <input 
+            type="date" 
+            className="form-control"
+            value={dob} 
+            onChange={(e) => setDob(e.target.value)}
+            required
+          />
+        </div>
+        <button className="btn btn-primary w-100" disabled={loading}>
+          {loading ? "Verifying..." : "Verify & Download"}
         </button>
       </form>
 
       {error && <div className="alert alert-danger mt-3">{error}</div>}
 
-      {result && (
-        <div className="card mt-4 p-3">
-          <p><b>Name:</b> {result.name}</p>
-          <p><b>Course:</b> {result.course}</p>
-          <p><b>Issued:</b> {new Date(result.issueDate).toDateString()}</p>
+      {certificate && (
+        <div>
+          {certificate.map((cert, index) => (
+            <div key={index} className="card mt-4">
+              <div className="card-header d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Certificate #{index + 1}</h5>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => downloadCertificate(cert)}
+                >
+                  <i className="bi bi-download me-1"></i> Download PDF
+                </button>
+              </div>
+              <div className="card-body">
+                <div className="row mb-3">
+                  <div className="col-md-6">
+                    <p><strong>Certificate Number:</strong> {cert.certificateNumber}</p>
+                  </div>
+                  <div className="col-md-6">
+                    <p><strong>Enrollment Number:</strong> {cert.enrollmentNumber}</p>
+                  </div>
+                </div>
+
+                <h6 className="border-bottom pb-2 mb-3">Student Details</h6>
+                <div className="row mb-3">
+                  <div className="col-md-6">
+                    <p><strong>Name:</strong> {cert.name}</p>
+                  </div>
+                  <div className="col-md-6">
+                    <p><strong>Father's Name:</strong> {cert.fatherName}</p>
+                  </div>
+                </div>
+
+                <h6 className="border-bottom pb-2 mb-3">Course Details</h6>
+                <div className="row mb-3">
+                  <div className="col-md-6">
+                    <p><strong>Course:</strong> {cert.courseName}</p>
+                  </div>
+                  <div className="col-md-6">
+                    <p><strong>Session:</strong> {cert.sessionFrom} - {cert.sessionTo}</p>
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-6">
+                    <p>
+                      <strong>Grade:</strong>{" "}
+                      <span className="badge bg-success">{cert.grade}</span>
+                    </p>
+                  </div>
+                  <div className="col-md-6">
+                    <p><strong>Issue Date:</strong> {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString() : "-"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {/* Download All Button */}
+          {certificate.length > 1 && (
+            <div className="text-center mt-4">
+              <button className="btn btn-success" onClick={() => downloadAllCertificates(certificate)}>
+                <i className="bi bi-download me-2"></i>
+                Download All Certificates
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

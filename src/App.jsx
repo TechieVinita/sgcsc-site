@@ -12,6 +12,16 @@ import './index.css';
 import FranchiseProfile from "./pages/FranchiseProfile";
 import FranchiseCredits from "./pages/FranchiseCredits";
 import FranchiseDashboard from "./pages/FranchiseDashboard";
+import FranchiseAddStudent from "./pages/FranchiseAddStudent";
+import FranchiseStudents from "./pages/FranchiseStudents";
+import FranchiseCourses from "./pages/FranchiseCourses";
+import FranchiseCreateCourse from "./pages/FranchiseCreateCourse";
+import FranchiseSubjectList from "./pages/FranchiseSubjectList";
+import FranchiseCreateSubject from "./pages/FranchiseCreateSubject";
+import FranchiseResultsList from "./pages/FranchiseResultsList";
+import FranchiseAddResults from "./pages/FranchiseAddResults";
+import FranchiseCertificateList from "./pages/FranchiseCertificateList";
+import FranchiseCertificateCreate from "./pages/FranchiseCertificateCreate";
 import FranchiseProtectedRoute from "./components/FranchiseProtectedRoute";
 
 
@@ -172,6 +182,123 @@ export default function App() {
   element={
     <FranchiseProtectedRoute>
       <FranchiseCredits />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/students/add"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseAddStudent />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/students/edit/:id"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseAddStudent />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/students"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseStudents />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/courses"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseCourses />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/courses/create"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseCreateCourse />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/subjects"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseSubjectList />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/subjects/create"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseCreateSubject />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/results"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseResultsList />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/results/create"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseAddResults />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/results/add"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseAddResults />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/certificates"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseCertificateList />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/certificates/create"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseCertificateCreate />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/certificates/add"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseCertificateCreate />
     </FranchiseProtectedRoute>
   }
 />

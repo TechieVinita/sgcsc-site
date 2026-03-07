@@ -30,10 +30,14 @@ export default function FranchiseLogin() {
       const token = data?.token;
       const user = data?.user ?? data?.franchise;
 
-      if (token) localStorage.setItem('token', token);
+      if (token) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('franchise_token', token);
+        localStorage.setItem('user_role', 'franchise');
+      }
       if (user) localStorage.setItem('currentUser', JSON.stringify(user));
 
-      navigate('/franchise/profile');
+      navigate('/franchise/dashboard');
     } catch (err) {
       setError(err.userMessage || 'Login failed. Please try again.');
     } finally {
