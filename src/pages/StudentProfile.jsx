@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import API from "../api/axiosInstance";
 
 // Default avatar SVG for students without a photo
@@ -16,6 +16,110 @@ export default function StudentProfile() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showReceipt, setShowReceipt] = useState(false);
+  const printRef = useRef();
+  
+  // Month names
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  
+  // Generate default monthly data from student courses
+  const generateMonthlyData = () => {
+    const data = {};
+    const currentYear = new Date().getFullYear();
+    const yearStr = currentYear.toString().slice(-2);
+    
+    // Initialize all 12 months with default values
+    for (let i = 0; i < 12; i++) {
+      const monthNum = i + 1;
+      data[i] = {
+        date: `01-${monthNum.toString().padStart(2, '0')}-${yearStr}`,
+        paid: student?.feeAmount ? Math.ceil(student.feeAmount / 12) : 0,
+        due: 0
+      };
+    }
+    return data;
+  };
+  
+  const [monthlyData, setMonthlyData] = useState({});
+  
+  // Calculate totals
+  const calculateTotals = () => {
+    let totalPaid = 0;
+    let totalDue = 0;
+    Object.values(monthlyData).forEach(d => {
+      totalPaid += Number(d.paid) || 0;
+      totalDue += Number(d.due) || 0;
+    });
+    return { totalPaid, totalDue };
+  };
+  
+  const { totalPaid, totalDue } = calculateTotals();
+  
+  // Generate receipt number
+  const generateReceiptNo = () => {
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `RC${year}${month}${random}`;
+  };
+  
+  const [receiptNo] = useState(generateReceiptNo());
+  
+  // Initialize monthly data when student loads
+  useEffect(() => {
+    if (student) {
+      setMonthlyData(generateMonthlyData());
+    }
+  }, [student]);
+  
+  const handlePrint = () => {
+    const printContent = printRef.current;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Fee Receipt</title>
+        <style>
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .receipt { width: 490px; margin: 20px auto; background: #fff; border: 4px solid #25D366; padding: 8px; font-size: 12px; }
+          .center-name { width: 100%; margin: 5px auto 2px auto; background: #25D366; color: #fff; text-align: center; font-weight: bold; font-size: 16px; padding: 5px 0; border-radius: 10px; letter-spacing: 2px; }
+          .center-address { text-align: center; font-size: 13px; margin-bottom: 10px; color: #444; }
+          .student { display: flex; justify-content: space-between; }
+          .details { flex: 1; margin: 0 8px; }
+          .row { margin-bottom: 3px; }
+          .label { display: inline-block; width: 110px; font-weight: bold; }
+          .fee-title { margin: 8px auto; width: 75%; background: #25D366; color: #fff; text-align: center; font-weight: bold; padding: 8px 0; border-radius: 30px; letter-spacing: 1px; }
+          .photo img { width: 90px; height: 90px; border: 1px solid #000; object-fit: cover; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 6px; }
+          th, td { border: 1px solid #000; padding: 3px; text-align: center; }
+          th { background: #eaeaea; }
+          .footer { margin-top: 6px; font-size: 10px; }
+        </style>
+      </head>
+      <body>
+        ${printContent.innerHTML}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+  
+  const formatDate = (date) =>
+    date ? new Date(date).toLocaleDateString() : "-";
+  
+  const formatDateGB = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB').replace(/\//g, '-');
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -56,9 +160,6 @@ export default function StudentProfile() {
       </div>
     );
   }
-
-  const formatDate = (date) =>
-    date ? new Date(date).toLocaleDateString() : "-";
 
   const yesNoBadge = (value) => (
     <span className={`badge ${value ? "bg-success" : "bg-secondary"}`}>
@@ -277,6 +378,99 @@ export default function StudentProfile() {
               </tr>
             </tbody>
           </table>
+
+          {/* ================= FEE RECEIPT ================= */}
+          <h6 className="fw-bold border-bottom pb-2 mb-3">
+            Fee Receipt
+          </h6>
+          <div className="mb-4">
+            <button 
+              className="btn btn-primary me-2" 
+              onClick={() => setShowReceipt(!showReceipt)}
+            >
+              {showReceipt ? 'Hide Receipt' : 'View/Print Receipt'}
+            </button>
+          </div>
+          
+          {showReceipt && (
+            <div className="card mb-4">
+              <div className="card-body">
+                <div ref={printRef}>
+                  <div className="receipt" style={{ maxWidth: '490px', margin: '0 auto', border: '4px solid #25D366', padding: '10px', background: '#fff' }}>
+                    <div style={{ background: '#25D366', color: '#fff', textAlign: 'center', fontWeight: 'bold', fontSize: '16px', padding: '8px 0', borderRadius: '10px', marginBottom: '5px' }}>
+                      SHREE GANPATI COMPUTER AND STUDY CENTRE
+                    </div>
+                    <div style={{ textAlign: 'center', fontSize: '13px', marginBottom: '10px', color: '#444' }}>
+                      <u>RAIPUR CHIRAIYAKOT MAU</u>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div style={{ width: '90px' }}>
+                        <img 
+                          src={student.photo || DEFAULT_AVATAR_SVG}
+                          alt="Student"
+                          style={{ width: '90px', height: '90px', border: '1px solid #000', objectFit: 'cover' }}
+                        />
+                      </div>
+                      <div style={{ flex: 1, marginLeft: '10px' }}>
+                        <div style={{ marginBottom: '3px' }}>
+                          <strong>Student's Name:</strong> {student.name || 'N/A'}
+                        </div>
+                        <div style={{ marginBottom: '3px' }}>
+                          <strong>Father's Name:</strong> {student.fatherName || 'N/A'}
+                        </div>
+                        <div style={{ marginBottom: '3px' }}>
+                          <strong>Course Name:</strong> {student.courseName || 'N/A'}
+                        </div>
+                        <div style={{ marginBottom: '3px' }}>
+                          <strong>Receipt No:</strong> {receiptNo}
+                        </div>
+                        <div style={{ background: '#25D366', color: '#fff', textAlign: 'center', fontWeight: 'bold', padding: '8px 0', borderRadius: '30px', marginTop: '8px' }}>
+                          STUDENT'S FEE RECEIPT
+                        </div>
+                      </div>
+                    </div>
+
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>Month</th>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>Date</th>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>Paid</th>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>Due</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.keys(monthlyData).map((monthIndex) => (
+                          <tr key={monthIndex}>
+                            <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{months[monthIndex]}</td>
+                            <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{monthlyData[monthIndex]?.date || '-'}</td>
+                            <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{monthlyData[monthIndex]?.paid || 0}</td>
+                            <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{monthlyData[monthIndex]?.due || 0}</td>
+                          </tr>
+                        ))}
+                        <tr>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>Total</th>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>-</th>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>{totalPaid}</th>
+                          <th style={{ border: '1px solid #000', padding: '3px' }}>{totalDue}</th>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div style={{ marginTop: '10px', fontSize: '10px' }}>
+                      Received By: ............................................................ All fees are non-refundable
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center mt-3">
+                  <button className="btn btn-success" onClick={handlePrint}>
+                    Download/Print Receipt
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ================= ACCOUNT / STATUS ================= */}
           <h6 className="fw-bold border-bottom pb-2 mb-3">
