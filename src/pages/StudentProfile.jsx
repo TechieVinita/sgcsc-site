@@ -18,6 +18,9 @@ export default function StudentProfile() {
   const [error, setError] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [certificates, setCertificates] = useState([]);
+  const [loadingCertificate, setLoadingCertificate] = useState(false);
+  const [certificateError, setCertificateError] = useState("");
   const printRef = useRef();
   
   // Initialize selected course when student data loads
@@ -134,6 +137,54 @@ export default function StudentProfile() {
   
   const formatDate = (date) =>
     date ? new Date(date).toLocaleDateString() : "-";
+
+  // Fetch certificates for the student
+  const fetchCertificates = async () => {
+    try {
+      const res = await API.get("/student-profile/certificate");
+      if (res.data?.success && res.data?.data) {
+        setCertificates(res.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching certificates:", err);
+      // Silent fail - certificates may not exist for this student
+    }
+  };
+
+  // Download certificate using the template
+  const downloadCertificate = async (cert) => {
+    setLoadingCertificate(true);
+    setCertificateError("");
+    
+    try {
+      // Initialize certificate generator if not already done
+      if (window.CertificateGenerator) {
+        const certGen = window.CertificateGenerator;
+        try {
+          await certGen.loadTemplate('/template.jpeg');
+          
+          const studentData = {
+            name: cert.name,
+            atcCode: cert.certificateNumber,
+            dateOfIssue: cert.issueDate,
+            dateOfRenewal: cert.renewalDate
+          };
+          
+          certGen.download(studentData);
+        } catch (templateErr) {
+          console.error("Template load error:", templateErr);
+          setCertificateError("Certificate template not found. Please contact admin.");
+        }
+      } else {
+        setCertificateError("Certificate generator not loaded. Please refresh the page.");
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      setCertificateError("Failed to download certificate.");
+    } finally {
+      setLoadingCertificate(false);
+    }
+  };
   
 
 
@@ -142,6 +193,8 @@ export default function StudentProfile() {
       try {
         const res = await API.get("/student-profile/me");
         setStudent(res.data?.data || null);
+        // Fetch certificates after profile loads
+        fetchCertificates();
       } catch (err) {
         console.error("Student profile fetch failed:", err);
         setError("Unable to load student profile at the moment.");
@@ -521,6 +574,71 @@ export default function StudentProfile() {
               </tr>
             </tbody>
           </table>
+
+          {/* ================= CERTIFICATES ================= */}
+          {certificates && certificates.length > 0 && (
+            <>
+              <h6 className="fw-bold border-bottom pb-2 mb-3 mt-4">
+                My Certificates
+              </h6>
+              <div className="mb-4">
+                {certificateError && (
+                  <div className="alert alert-warning mb-3">
+                    {certificateError}
+                  </div>
+                )}
+                <div className="row">
+                  {certificates.map((cert, index) => (
+                    <div key={index} className="col-md-6 mb-3">
+                      <div className="card h-100">
+                        <div className="card-body">
+                          <h6 className="card-title">
+                            <i className="bi bi-award me-2"></i>
+                            {cert.courseName || "Certificate"}
+                          </h6>
+                          <table className="table table-sm mb-3">
+                            <tbody>
+                              <tr>
+                                <th>Certificate No.</th>
+                                <td>{cert.certificateNumber || "-"}</td>
+                              </tr>
+                              <tr>
+                                <th>Issue Date</th>
+                                <td>{formatDate(cert.issueDate)}</td>
+                              </tr>
+                              {cert.renewalDate && (
+                                <tr>
+                                  <th>Renewal Date</th>
+                                  <td>{formatDate(cert.renewalDate)}</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                          <button
+                            className="btn btn-primary btn-sm w-100"
+                            onClick={() => downloadCertificate(cert)}
+                            disabled={loadingCertificate}
+                          >
+                            {loadingCertificate ? (
+                              <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <i className="bi bi-download me-2"></i>
+                                Download Certificate
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
         </div>
       </div>
