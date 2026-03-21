@@ -17,7 +17,26 @@ export default function StudentProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const printRef = useRef();
+  
+  // Initialize selected course when student data loads
+  useEffect(() => {
+    if (student) {
+      if (student.courses && student.courses.length > 0) {
+        setSelectedCourse(student.courses[0]);
+      } else {
+        setSelectedCourse(null);
+      }
+    }
+  }, [student]);
+  
+  // Handle course selection change for fee receipt
+  const handleCourseChange = (courseIndex) => {
+    if (student && student.courses && student.courses[courseIndex]) {
+      setSelectedCourse(student.courses[courseIndex]);
+    }
+  };
   
   // Month names
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -39,7 +58,7 @@ export default function StudentProfile() {
     }
     return data;
   };
-  
+
   const [monthlyData, setMonthlyData] = useState({});
   
   // Calculate totals
@@ -71,6 +90,7 @@ export default function StudentProfile() {
     if (student) {
       setMonthlyData(generateMonthlyData());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [student]);
   
   const handlePrint = () => {
@@ -115,11 +135,7 @@ export default function StudentProfile() {
   const formatDate = (date) =>
     date ? new Date(date).toLocaleDateString() : "-";
   
-  const formatDateGB = (dateStr) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-GB').replace(/\//g, '-');
-  };
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -395,6 +411,23 @@ export default function StudentProfile() {
           {showReceipt && (
             <div className="card mb-4">
               <div className="card-body">
+                {/* Course Selection - Only show if student has multiple courses */}
+                {student.courses && student.courses.length > 1 && (
+                  <div className="mb-3">
+                    <label className="form-label">Select Course for Fee Receipt:</label>
+                    <select
+                      className="form-select"
+                      value={student.courses.findIndex(c => c._id === selectedCourse?._id)}
+                      onChange={(e) => handleCourseChange(Number(e.target.value))}
+                    >
+                      {student.courses.map((course, index) => (
+                        <option key={index} value={index}>
+                          {course.courseName} - ₹{course.feeAmount || 0} (Paid: ₹{course.amountPaid || 0})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div ref={printRef}>
                   <div className="receipt" style={{ maxWidth: '490px', margin: '0 auto', border: '4px solid #25D366', padding: '10px', background: '#fff' }}>
                     <div style={{ background: '#25D366', color: '#fff', textAlign: 'center', fontWeight: 'bold', fontSize: '16px', padding: '8px 0', borderRadius: '10px', marginBottom: '5px' }}>
@@ -420,7 +453,7 @@ export default function StudentProfile() {
                           <strong>Father's Name:</strong> {student.fatherName || 'N/A'}
                         </div>
                         <div style={{ marginBottom: '3px' }}>
-                          <strong>Course Name:</strong> {student.courseName || 'N/A'}
+                          <strong>Course Name:</strong> {selectedCourse?.courseName || student.courseName || 'N/A'}
                         </div>
                         <div style={{ marginBottom: '3px' }}>
                           <strong>Receipt No:</strong> {receiptNo}
