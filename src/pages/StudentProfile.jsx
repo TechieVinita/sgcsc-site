@@ -25,6 +25,10 @@ export default function StudentProfile() {
   const [admitCard, setAdmitCard] = useState(null);
   const [loadingAdmitCard, setLoadingAdmitCard] = useState(false);
   const [admitCardError, setAdmitCardError] = useState("");
+  // ID card state
+  const [idCard, setIdCard] = useState(null);
+  const [loadingIdCard, setLoadingIdCard] = useState(false);
+  const [idCardError, setIdCardError] = useState("");
   const printRef = useRef();
   
   // Initialize selected course when student data loads
@@ -155,23 +159,72 @@ export default function StudentProfile() {
     }
   };
 
-  // Download certificate using the template
+  // Download certificate as PDF
   const downloadCertificate = async (cert) => {
     setLoadingCertificate(true);
     setCertificateError("");
     
     try {
-      // Initialize certificate generator if not already done
+      // If certificate has stored image, convert to PDF and download
+      if (cert.certificateImage) {
+        // Load jsPDF if not already loaded
+        if (!window.jspdf) {
+          await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = resolve;
+            document.body.appendChild(script);
+          });
+        }
+        
+        const { jsPDF } = window.jspdf;
+        
+        // Load the certificate image
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = cert.certificateImage;
+        });
+        
+        // Create PDF with same dimensions as the image
+        const pdf = new jsPDF({
+          orientation: img.width > img.height ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [img.width, img.height]
+        });
+        
+        // Add the image to PDF
+        pdf.addImage(cert.certificateImage, 'JPEG', 0, 0, img.width, img.height);
+        
+        // Download as PDF
+        pdf.save(`certificate_${cert.certificateNumber || cert.enrollmentNumber || 'student'}.pdf`);
+        
+        setLoadingCertificate(false);
+        return;
+      }
+      
+      // Otherwise, use the certificate generator to create the PDF
       if (window.CertificateGenerator) {
         const certGen = window.CertificateGenerator;
         try {
-          await certGen.loadTemplate('/template.jpeg');
+          await certGen.loadTemplate('/student-certificate-template.jpeg');
           
+          const studentNameCombined = cert.fatherName 
+            ? `${cert.name} S/O, D/O, W/O ${cert.fatherName}` 
+            : cert.name;
+            
           const studentData = {
-            name: cert.name,
             atcCode: cert.certificateNumber,
+            studentNameCombined: studentNameCombined,
+            courseName: cert.courseName,
+            grade: cert.grade,
+            courseDuration: cert.courseDuration,
+            coursePeriodFrom: cert.coursePeriodFrom,
+            coursePeriodTo: cert.coursePeriodTo,
+            certificateNumber: cert.certificateNumber,
             dateOfIssue: cert.issueDate,
-            dateOfRenewal: cert.renewalDate
           };
           
           certGen.download(studentData);
@@ -243,6 +296,61 @@ export default function StudentProfile() {
       setLoadingAdmitCard(false);
     }
   };
+
+  // Fetch ID card for the student
+  const fetchIdCard = async () => {
+    try {
+      const res = await API.get("/student-profile/id-card");
+      if (res.data?.success && res.data?.data) {
+        setIdCard(res.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching ID card:", err);
+    }
+  };
+
+  // Download ID card using the template
+  const downloadIdCard = async () => {
+    setLoadingIdCard(true);
+    setIdCardError("");
+
+    try {
+      if (window.IDCardGenerator) {
+        const idCardGen = window.IDCardGenerator;
+        try {
+          await idCardGen.loadTemplate('/id-card-template.jpeg');
+          
+          const idCardData = {
+            studentName: idCard.studentName,
+            fatherName: idCard.fatherName || '',
+            motherName: idCard.motherName || '',
+            enrollmentNo: idCard.enrollmentNo || '',
+            dateOfBirth: idCard.dateOfBirth || '',
+            contactNo: idCard.contactNo || '',
+            address: idCard.address || '',
+            mobileNo: idCard.mobileNo || '',
+            courseName: idCard.courseName || '',
+            centerName: idCard.centerName || '',
+            sessionFrom: idCard.sessionFrom || '',
+            sessionTo: idCard.sessionTo || '',
+            photo: idCard.photo || '',
+          };
+          
+          idCardGen.download(idCardData);
+        } catch (templateErr) {
+          console.error("ID card template load error:", templateErr);
+          setIdCardError("ID card template not found. Please contact admin.");
+        }
+      } else {
+        setIdCardError("ID card generator not loaded. Please refresh the page.");
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      setIdCardError("Failed to download ID card.");
+    } finally {
+      setLoadingIdCard(false);
+    }
+  };
   
 
 
@@ -255,6 +363,8 @@ export default function StudentProfile() {
         fetchCertificates();
         // Fetch admit card after profile loads
         fetchAdmitCard();
+        // Fetch ID card after profile loads
+        fetchIdCard();
       } catch (err) {
         console.error("Student profile fetch failed:", err);
         setError("Unable to load student profile at the moment.");
@@ -699,6 +809,73 @@ export default function StudentProfile() {
                       disabled={loadingAdmitCard}
                     >
                       {loadingAdmitCard ? "Downloading..." : "Download Admit Card"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ================= ID CARD ================= */}
+          {idCard && (
+            <>
+              <h6 className="fw-bold border-bottom pb-2 mb-3 mt-4">
+                My ID Card
+              </h6>
+              <div className="mb-4">
+                {idCardError && (
+                  <div className="alert alert-warning mb-3">
+                    {idCardError}
+                  </div>
+                )}
+                <div className="card">
+                  <div className="card-body">
+                    <div className="row">
+                      {idCard.photo && (
+                        <div className="col-md-3 text-center mb-3">
+                          <img 
+                            src={idCard.photo} 
+                            alt="Student" 
+                            className="img-thumbnail" 
+                            style={{ maxWidth: '120px', maxHeight: '120px' }}
+                          />
+                        </div>
+                      )}
+                      <div className={idCard.photo ? "col-md-9" : "col-12"}>
+                        <table className="table table-sm mb-3">
+                          <tbody>
+                            <tr>
+                              <th>Enrollment No.</th>
+                              <td>{idCard.enrollmentNo || "-"}</td>
+                            </tr>
+                            <tr>
+                              <th>Course</th>
+                              <td>{idCard.courseName || "-"}</td>
+                            </tr>
+                            <tr>
+                              <th>Center</th>
+                              <td>{idCard.centerName || "-"}</td>
+                            </tr>
+                            {idCard.sessionFrom && idCard.sessionTo && (
+                              <tr>
+                                <th>Session</th>
+                                <td>{idCard.sessionFrom} - {idCard.sessionTo}</td>
+                              </tr>
+                            )}
+                            <tr>
+                              <th>Date of Birth</th>
+                              <td>{idCard.dateOfBirth || "-"}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-primary btn-sm w-100"
+                      onClick={downloadIdCard}
+                      disabled={loadingIdCard}
+                    >
+                      {loadingIdCard ? "Downloading..." : "Download ID Card"}
                     </button>
                   </div>
                 </div>
