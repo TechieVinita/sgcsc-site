@@ -21,6 +21,10 @@ export default function StudentProfile() {
   const [certificates, setCertificates] = useState([]);
   const [loadingCertificate, setLoadingCertificate] = useState(false);
   const [certificateError, setCertificateError] = useState("");
+  // Admit card state
+  const [admitCard, setAdmitCard] = useState(null);
+  const [loadingAdmitCard, setLoadingAdmitCard] = useState(false);
+  const [admitCardError, setAdmitCardError] = useState("");
   const printRef = useRef();
   
   // Initialize selected course when student data loads
@@ -185,6 +189,60 @@ export default function StudentProfile() {
       setLoadingCertificate(false);
     }
   };
+
+  // Fetch admit card for the student
+  const fetchAdmitCard = async () => {
+    try {
+      const res = await API.get("/student-profile/admit-card");
+      if (res.data?.success && res.data?.data) {
+        setAdmitCard(res.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching admit card:", err);
+    }
+  };
+
+  // Download admit card using the template
+  const downloadAdmitCard = async () => {
+    setLoadingAdmitCard(true);
+    setAdmitCardError("");
+
+    try {
+      if (window.AdmitCardGenerator) {
+        const admitGen = window.AdmitCardGenerator;
+        try {
+          await admitGen.loadTemplate('/admit-card-template.jpeg');
+          
+          const admitCardData = {
+            rollNumber: admitCard.rollNumber,
+            studentName: admitCard.name,
+            fatherName: admitCard.fatherName || '',
+            motherName: admitCard.motherName || '',
+            courseName: admitCard.course,
+            instituteName: admitCard.institute || '',
+            examCenterAddress: admitCard.center || '',
+            examDate: admitCard.examDate,
+            examTime: admitCard.examTime || '',
+            reportingTime: admitCard.reportingTime || '',
+            examDuration: admitCard.examDuration || '',
+            photo: admitCard.photo || '',
+          };
+          
+          admitGen.download(admitCardData);
+        } catch (templateErr) {
+          console.error("Admit card template load error:", templateErr);
+          setAdmitCardError("Admit card template not found. Please contact admin.");
+        }
+      } else {
+        setAdmitCardError("Admit card generator not loaded. Please refresh the page.");
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      setAdmitCardError("Failed to download admit card.");
+    } finally {
+      setLoadingAdmitCard(false);
+    }
+  };
   
 
 
@@ -195,6 +253,8 @@ export default function StudentProfile() {
         setStudent(res.data?.data || null);
         // Fetch certificates after profile loads
         fetchCertificates();
+        // Fetch admit card after profile loads
+        fetchAdmitCard();
       } catch (err) {
         console.error("Student profile fetch failed:", err);
         setError("Unable to load student profile at the moment.");
@@ -574,6 +634,77 @@ export default function StudentProfile() {
               </tr>
             </tbody>
           </table>
+
+          {/* ================= ADMIT CARD ================= */}
+          {admitCard && (
+            <>
+              <h6 className="fw-bold border-bottom pb-2 mb-3 mt-4">
+                My Admit Card
+              </h6>
+              <div className="mb-4">
+                {admitCardError && (
+                  <div className="alert alert-warning mb-3">
+                    {admitCardError}
+                  </div>
+                )}
+                <div className="card">
+                  <div className="card-body">
+                    <div className="row">
+                      {admitCard.photo && (
+                        <div className="col-md-3 text-center mb-3">
+                          <img 
+                            src={admitCard.photo} 
+                            alt="Student" 
+                            className="img-thumbnail" 
+                            style={{ maxWidth: '120px', maxHeight: '120px' }}
+                          />
+                        </div>
+                      )}
+                      <div className={admitCard.photo ? "col-md-9" : "col-12"}>
+                        <table className="table table-sm mb-3">
+                          <tbody>
+                            <tr>
+                              <th>Roll Number</th>
+                              <td>{admitCard.rollNumber || "-"}</td>
+                            </tr>
+                            <tr>
+                              <th>Course</th>
+                              <td>{admitCard.course || "-"}</td>
+                            </tr>
+                            {admitCard.examDate && (
+                              <tr>
+                                <th>Exam Date</th>
+                                <td>{admitCard.examDate}</td>
+                              </tr>
+                            )}
+                            {admitCard.examTime && (
+                              <tr>
+                                <th>Exam Time</th>
+                                <td>{admitCard.examTime}</td>
+                              </tr>
+                            )}
+                            {admitCard.center && (
+                              <tr>
+                                <th>Exam Center</th>
+                                <td>{admitCard.center}</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-primary btn-sm w-100"
+                      onClick={downloadAdmitCard}
+                      disabled={loadingAdmitCard}
+                    >
+                      {loadingAdmitCard ? "Downloading..." : "Download Admit Card"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* ================= CERTIFICATES ================= */}
           {certificates && certificates.length > 0 && (
