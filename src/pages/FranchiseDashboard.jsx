@@ -212,12 +212,38 @@ function Sidebar({ franchise }) {
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
                 <NavLink to="/franchise/certificates/create" className={subLinkClass}>
-                  Create Certificate
+                  Student Certificates
                 </NavLink>
               </li>
               <li className="mb-1">
                 <NavLink to="/franchise/certificates" end className={subLinkClass}>
-                  View Certificates
+                  View Student Certificates
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <hr className="my-2" />
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/franchise-certificates/create" className={subLinkClass}>
+                  Franchise Certificates
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/franchise-certificates" end className={subLinkClass}>
+                  View Franchise Certificates
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <hr className="my-2" />
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/typing-certificates/create" className={subLinkClass}>
+                  Typing Certificates
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/typing-certificates" end className={subLinkClass}>
+                  View Typing Certificates
                 </NavLink>
               </li>
             </ul>

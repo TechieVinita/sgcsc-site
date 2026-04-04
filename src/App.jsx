@@ -22,6 +22,10 @@ import FranchiseResultsList from "./pages/FranchiseResultsList";
 import FranchiseAddResults from "./pages/FranchiseAddResults";
 import FranchiseCertificateList from "./pages/FranchiseCertificateList";
 import FranchiseCertificateCreate from "./pages/FranchiseCertificateCreate";
+import FranchiseFranchiseCertificateList from "./pages/FranchiseFranchiseCertificateList";
+import FranchiseFranchiseCertificateCreate from "./pages/FranchiseFranchiseCertificateCreate";
+import FranchiseTypingCertificateList from "./pages/FranchiseTypingCertificateList";
+import FranchiseTypingCertificateCreate from "./pages/FranchiseTypingCertificateCreate";
 import FranchiseProtectedRoute from "./components/FranchiseProtectedRoute";
 
 
@@ -290,6 +294,42 @@ export default function App() {
   element={
     <FranchiseProtectedRoute>
       <FranchiseCertificateCreate />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/franchise-certificates"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseFranchiseCertificateList />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/franchise-certificates/create"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseFranchiseCertificateCreate />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/typing-certificates"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseTypingCertificateList />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
+  path="/franchise/typing-certificates/create"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseTypingCertificateCreate />
     </FranchiseProtectedRoute>
   }
 />
