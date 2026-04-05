@@ -20,7 +20,6 @@ export default function FranchiseFranchiseCertificateList() {
   const [franchise, setFranchise] = useState(null);
 
   const [search, setSearch] = useState("");
-  const [viewingCertificate, setViewingCertificate] = useState(null);
 
   // Get franchise info
   useEffect(() => {

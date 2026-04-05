@@ -104,7 +104,7 @@ export default function FranchiseFranchiseCertificateCreate() {
   });
 
   // Get franchise info
-  useState(() => {
+  useEffect(() => {
     const fetchFranchise = async () => {
       try {
         const res = await API.get("/franchise-profile/me");

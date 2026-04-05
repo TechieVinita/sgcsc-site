@@ -20,7 +20,6 @@ export default function FranchiseTypingCertificateList() {
   const [franchise, setFranchise] = useState(null);
 
   const [search, setSearch] = useState("");
-  const [viewingCertificate, setViewingCertificate] = useState(null);
 
   // Get franchise info
   useEffect(() => {
