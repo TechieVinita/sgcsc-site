@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
-import Sidebar from "./FranchiseDashboard";
+import { FranchiseLayout } from "./FranchiseStudents";
 
 function fmtDate(d) {
   if (!d) return "-";
@@ -17,23 +17,12 @@ export default function FranchiseCertificateList() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [msgType, setMsgType] = useState("info");
-  const [franchise, setFranchise] = useState(null);
+
 
   const [search, setSearch] = useState("");
-  const [viewingCertificate, setViewingCertificate] = useState(null);
 
-  // Get franchise info
-  useEffect(() => {
-    const fetchFranchise = async () => {
-      try {
-        const res = await API.get("/franchise-profile/me");
-        setFranchise(res.data?.data || null);
-      } catch (err) {
-        console.error("fetchFranchise error:", err);
-      }
-    };
-    fetchFranchise();
-  }, []);
+
+
 
   const fetchCertificates = async () => {
     setLoading(true);
@@ -224,9 +213,7 @@ export default function FranchiseCertificateList() {
   };
 
   return (
-    <div className="d-flex">
-      <Sidebar franchise={franchise} />
-      <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
+    <FranchiseLayout>
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
           <div>
             <h2 className="fw-bold mb-1">Certificates</h2>
@@ -299,20 +286,26 @@ export default function FranchiseCertificateList() {
                           <span className="badge bg-success">{c.grade}</span>
                         </td>
                         <td>{fmtDate(c.issueDate)}</td>
-                        <td>
-                          <button
-                            className="btn btn-sm btn-outline-primary me-1"
-                            onClick={() => setViewingCertificate(c)}
-                          >
-                            View
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDelete(c._id)}
-                          >
-                            Delete
-                          </button>
-                        </td>
+                         <td>
+                           <button
+                             className="btn btn-sm btn-outline-primary me-1"
+                             onClick={() => navigate(`/franchise/certificates/view/${c._id}`)}
+                           >
+                             View
+                           </button>
+                           <button
+                             className="btn btn-sm btn-outline-info me-1"
+                             onClick={() => handlePrint(c)}
+                           >
+                             Print
+                           </button>
+                           <button
+                             className="btn btn-sm btn-outline-danger"
+                             onClick={() => handleDelete(c._id)}
+                           >
+                             Delete
+                           </button>
+                         </td>
                       </tr>
                     ))}
                   </tbody>
@@ -321,92 +314,6 @@ export default function FranchiseCertificateList() {
             )}
           </div>
         </div>
-      </div>
-
-      {/* View Certificate Modal */}
-      {viewingCertificate && (
-        <div
-          className="modal d-block"
-          tabIndex="-1"
-          role="dialog"
-          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
-        >
-          <div className="modal-dialog modal-lg" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  Certificate - {viewingCertificate.certificateNumber}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setViewingCertificate(null)}
-                />
-              </div>
-              <div className="modal-body">
-                <div className="text-center mb-3">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handlePrint(viewingCertificate)}
-                  >
-                    Print Certificate
-                  </button>
-                </div>
-                <div className="certificate-preview p-4 border">
-                  <div className="text-center">
-                    <h5 className="text-uppercase fw-bold">
-                      Certificate of Completion
-                    </h5>
-                    <p className="text-muted">This is to certify that</p>
-                    <h4 className="fw-bold text-primary mb-3">
-                      {viewingCertificate.name}
-                    </h4>
-                    <p className="mb-2">
-                      Son/Daughter of <strong>{viewingCertificate.fatherName}</strong>
-                    </p>
-                    <p className="mb-2">has successfully completed the course</p>
-                    <h5 className="fw-bold mb-3">{viewingCertificate.courseName}</h5>
-                  </div>
-                  <div className="row mt-3">
-                    <div className="col-md-6">
-                      <p>
-                        <strong>Session:</strong>{" "}
-                        {viewingCertificate.sessionFrom}-{viewingCertificate.sessionTo}
-                      </p>
-                      <p>
-                        <strong>Grade:</strong> {viewingCertificate.grade}
-                      </p>
-                    </div>
-                    <div className="col-md-6">
-                      <p>
-                        <strong>Enrollment No:</strong>{" "}
-                        {viewingCertificate.enrollmentNumber}
-                      </p>
-                      <p>
-                        <strong>Certificate No:</strong>{" "}
-                        {viewingCertificate.certificateNumber}
-                      </p>
-                      <p>
-                        <strong>Issue Date:</strong>{" "}
-                        {fmtDate(viewingCertificate.issueDate)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setViewingCertificate(null)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </FranchiseLayout>
   );
 }

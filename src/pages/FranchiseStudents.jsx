@@ -1,40 +1,260 @@
 // src/pages/FranchiseStudents.jsx
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
-import Sidebar from "./FranchiseDashboard";
 
-function fmtDate(d) {
-  if (!d) return "";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "";
-  return dt.toISOString().slice(0, 10);
+// Sidebar for Franchise Panel
+export function FranchiseSidebar() {
+  const [openMenu, setOpenMenu] = useState(null);
+  const navigate = useNavigate();
+
+  const toggleMenu = (menu) => {
+    setOpenMenu((prev) => (prev === menu ? null : menu));
+  };
+
+  const mainLinkClass = ({ isActive }) =>
+    `nav-link d-flex align-items-center gap-2 ${
+      isActive ? "active bg-primary text-white" : "text-dark"
+    } rounded py-2`;
+
+  const subLinkClass = ({ isActive }) =>
+    `nav-link small d-flex align-items-center ${
+      isActive ? "text-primary fw-semibold" : "text-dark"
+    } py-1`;
+
+  const handleLogout = () => {
+    localStorage.removeItem("franchise_token");
+    localStorage.removeItem("user_role");
+    navigate("/login");
+  };
+
+  return (
+    <div
+      className="bg-light border-end vh-100 d-flex flex-column p-3"
+      style={{ width: "260px", position: "fixed", left: 0, top: 0, zIndex: 1000, overflowY: "auto" }}
+    >
+      <div className="mb-4">
+        <h2 className="fs-5 fw-bold mb-1 text-primary">Franchise Panel</h2>
+      </div>
+
+      <ul className="nav nav-pills flex-column mb-auto">
+        {/* Dashboard */}
+        <li className="nav-item mb-2">
+          <NavLink to="/franchise/dashboard" className={mainLinkClass}>
+            <i className="bi bi-house-door"></i>
+            <span>Dashboard</span>
+          </NavLink>
+        </li>
+
+        {/* Students */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("students")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <i className="bi bi-people"></i>
+              Students
+            </span>
+            <i className={`bi ${openMenu === "students" ? "bi-chevron-down" : "bi-chevron-right"}`}></i>
+          </button>
+          {openMenu === "students" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/franchise/students/add" className={subLinkClass}>
+                  Add Student
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/students" end className={subLinkClass}>
+                  View Students
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* Courses */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("courses")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <i className="bi bi-book"></i>
+              Courses
+            </span>
+            <i className={`bi ${openMenu === "courses" ? "bi-chevron-down" : "bi-chevron-right"}`}></i>
+          </button>
+          {openMenu === "courses" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/franchise/courses/create" className={subLinkClass}>
+                  Create Course
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/courses" end className={subLinkClass}>
+                  View Courses
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* Subjects */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("subjects")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <i className="bi bi-journal-text"></i>
+              Subjects
+            </span>
+            <i className={`bi ${openMenu === "subjects" ? "bi-chevron-down" : "bi-chevron-right"}`}></i>
+          </button>
+          {openMenu === "subjects" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/franchise/subjects/create" className={subLinkClass}>
+                  Create Subject
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/subjects" end className={subLinkClass}>
+                  View Subjects
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* Results */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("results")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <i className="bi bi-clipboard-check"></i>
+              Results
+            </span>
+            <i className={`bi ${openMenu === "results" ? "bi-chevron-down" : "bi-chevron-right"}`}></i>
+          </button>
+          {openMenu === "results" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/franchise/results/add" className={subLinkClass}>
+                  Add Result
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/results" end className={subLinkClass}>
+                  View Results
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* Certificates */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("certificates")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <i className="bi bi-award"></i>
+              Certificates
+            </span>
+            <i className={`bi ${openMenu === "certificates" ? "bi-chevron-down" : "bi-chevron-right"}`}></i>
+          </button>
+          {openMenu === "certificates" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/franchise/certificates/create" className={subLinkClass}>
+                  Create Certificate
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/certificates" end className={subLinkClass}>
+                  View Certificates
+                </NavLink>
+              </li>
+              <li className="mb-1"><hr className="my-2" /></li>
+              <li className="mb-1">
+                <NavLink to="/franchise/typing-certificates/create" className={subLinkClass}>
+                  Typing Certificates
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/typing-certificates" end className={subLinkClass}>
+                  View Typing Certificates
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* My Credits */}
+        <li className="nav-item mb-2">
+          <NavLink to="/franchise/credits" className={mainLinkClass}>
+            <i className="bi bi-credit-card-2-front"></i>
+            <span>My Credits</span>
+          </NavLink>
+        </li>
+
+        {/* My Profile */}
+        <li className="nav-item mb-2">
+          <NavLink to="/franchise/profile" className={mainLinkClass}>
+            <i className="bi bi-person"></i>
+            <span>My Profile</span>
+          </NavLink>
+        </li>
+      </ul>
+
+      {/* Logout */}
+      <div className="mt-auto pt-3 border-top">
+        <button
+          onClick={handleLogout}
+          className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+        >
+          <i className="bi bi-box-arrow-right"></i>
+          Logout
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Reusable layout wrapper — use this on every franchise page
+export function FranchiseLayout({ children }) {
+  return (
+    <div className="d-flex min-vh-100">
+      <FranchiseSidebar />
+      <div style={{ marginLeft: "260px", width: "calc(100% - 260px)" }}>
+        <div className="container-fluid p-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function FranchiseStudents() {
   const [students, setStudents] = useState([]);
-  // eslint-disable-next-line no-unused-vars
-  const [courses, setCourses] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [franchise, setFranchise] = useState(null);
-  const [viewing, setViewing] = useState(null);
+
 
   const navigate = useNavigate();
-
-  // Fetch franchise info
-  useEffect(() => {
-    const fetchFranchise = async () => {
-      try {
-        const res = await API.get("/franchise-profile/me");
-        setFranchise(res.data?.data || null);
-      } catch (err) {
-        console.error("fetchFranchise error:", err);
-      }
-    };
-    fetchFranchise();
-  }, []);
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -58,17 +278,6 @@ export default function FranchiseStudents() {
 
   useEffect(() => {
     fetchStudents();
-    // Fetch courses for dropdown
-    const fetchCourses = async () => {
-      try {
-        const res = await API.get("/courses");
-        const data = res.data;
-        setCourses(Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : []);
-      } catch (err) {
-        console.error("fetchCourses error:", err);
-      }
-    };
-    fetchCourses();
   }, [fetchStudents]);
 
   const handleDelete = async (id) => {
@@ -82,257 +291,180 @@ export default function FranchiseStudents() {
     }
   };
 
-  // Filter students based on search
   const filteredStudents = students.filter((student) => {
-    const searchLower = search.toLowerCase();
+    const q = search.toLowerCase();
     return (
-      (student.name?.toLowerCase() || "").includes(searchLower) ||
-      (student.rollNumber?.toLowerCase() || "").includes(searchLower) ||
-      (student.enrollmentNo?.toLowerCase() || "").includes(searchLower) ||
-      (student.mobile?.toLowerCase() || "").includes(searchLower) ||
-      (student.email?.toLowerCase() || "").includes(searchLower)
+      (student.name?.toLowerCase() || "").includes(q) ||
+      (student.rollNumber?.toLowerCase() || "").includes(q) ||
+      (student.enrollmentNo?.toLowerCase() || "").includes(q) ||
+      (student.mobile?.toLowerCase() || "").includes(q) ||
+      (student.email?.toLowerCase() || "").includes(q)
     );
   });
 
   return (
-    <div className="d-flex">
-      <Sidebar franchise={franchise} />
-      <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-          <div>
-            <h2 className="fw-bold mb-0">Students</h2>
-            <small className="text-muted">
-              Manage your franchise students
-            </small>
-          </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate("/franchise/students/add")}
-          >
-            + Add Student
-          </button>
+    <FranchiseLayout>
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h2 className="fw-bold mb-0">Students</h2>
+          <small className="text-muted">Manage your franchise students</small>
         </div>
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate("/franchise/students/add")}
+        >
+          + Add Student
+        </button>
+      </div>
 
-        {error && (
-          <div className="alert alert-danger" role="alert">
-            {error}
-          </div>
-        )}
+      {/* Error */}
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          {error}
+          <button type="button" className="btn-close" onClick={() => setError("")} aria-label="Close"></button>
+        </div>
+      )}
 
-        {/* Search */}
-        <div className="card mb-4">
-          <div className="card-body">
-            <div className="row g-3">
-              <div className="col-md-6">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search by name, roll number, mobile, email..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+      {/* Search */}
+      <div className="card mb-4">
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-6">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search by name, roll number, mobile, email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Students Table */}
-        <div className="card">
-          <div className="card-body">
-            {loading ? (
-              <div className="text-center py-5">
-                <div className="spinner-border" role="status" />
-                <p className="mt-2">Loading students...</p>
-              </div>
-            ) : filteredStudents.length === 0 ? (
-              <div className="text-center py-5">
-                <p className="text-muted">No students found.</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => navigate("/franchise/students/add")}
-                >
-                  Add Your First Student
-                </button>
-              </div>
-            ) : (
-              <div className="table-responsive">
-                <table className="table table-hover">
-                  <thead>
-                    <tr>
-                      <th>Roll No.</th>
-                      <th>Name</th>
-                      <th>Mobile</th>
-                      <th>Email</th>
-                      <th>Course</th>
-                      <th>Fees Status</th>
-                      <th>Join Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStudents.map((student) => (
-                      <tr key={student._id || student.id}>
+      {/* Students Table */}
+      <div className="card">
+        <div className="card-body">
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border" role="status" />
+              <p className="mt-2">Loading students...</p>
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="text-center py-5">
+              <p className="text-muted">No students found.</p>
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/franchise/students/add")}
+              >
+                Add Your First Student
+              </button>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Roll No.</th>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Email</th>
+                    <th>Course</th>
+                    <th>Fees Status</th>
+                    <th>Join Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.map((student) => {
+                    const id = student._id || student.id;
+                    const feeDetails =
+                      student.courses && Array.isArray(student.courses) && student.courses.length > 0
+                        ? {
+                            fee: student.courses.reduce((sum, c) => sum + (Number(c.feeAmount) || 0), 0),
+                            paid: student.courses.reduce((sum, c) => sum + (Number(c.amountPaid) || 0), 0),
+                          }
+                        : {
+                            fee: Number(student.feeAmount) || 0,
+                            paid: Number(student.amountPaid) || 0,
+                          };
+                    const pending = feeDetails.fee - feeDetails.paid;
+
+                    return (
+                      <tr key={id}>
                         <td>{student.rollNumber || "—"}</td>
                         <td>
-                          <div className="d-flex align-items-center">
+                          <div className="d-flex align-items-center gap-2">
                             {student.photo && (
                               <img
                                 src={student.photo}
                                 alt=""
-                                className="rounded-circle me-2"
+                                className="rounded-circle"
                                 style={{ width: "32px", height: "32px", objectFit: "cover" }}
                               />
                             )}
                             <div>
                               <div className="fw-semibold">{student.name}</div>
                               {student.fatherName && (
-                                <small className="text-muted">
-                                  S/o {student.fatherName}
-                                </small>
+                                <small className="text-muted">S/o {student.fatherName}</small>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td>{student.mobile}</td>
+                        <td>{student.mobile || "—"}</td>
                         <td>{student.email || "—"}</td>
                         <td>
-                          {student.courses && student.courses.length > 0
-                            ? student.courses[0].courseName
-                            : student.courseName || "—"}
+                          {student.courseName ||
+                            (student.courses && student.courses[0]?.courseName) ||
+                            "—"}
                         </td>
                         <td>
-                          {student.courses && student.courses.some(c => c.feesPaid) ? (
-                            <span className="badge bg-success">Paid</span>
-                          ) : student.feesPaid ? (
-                            <span className="badge bg-success">Paid</span>
-                          ) : (
-                            <span className="badge bg-warning">Pending</span>
-                          )}
+                          <span className={`badge ${pending > 0 ? "bg-danger" : "bg-success"}`}>
+                            {pending > 0 ? `₹${pending} Due` : "Paid"}
+                          </span>
                         </td>
-                        <td>{fmtDate(student.joinDate || student.createdAt)}</td>
                         <td>
-                          <div className="btn-group">
+                          {student.joinDate || student.createdAt
+                            ? new Date(student.joinDate || student.createdAt).toLocaleDateString("en-IN")
+                            : "—"}
+                        </td>
+                        <td>
+                          <div className="d-flex gap-1">
+                             <button
+                               className="btn btn-sm btn-outline-info"
+                               onClick={() => navigate(`/franchise/students/view/${id}`)}
+                               title="View"
+                             >
+                               <i className="bi bi-eye"></i>
+                             </button>
                             <button
                               className="btn btn-sm btn-outline-primary"
-                              onClick={() => setViewing(student)}
+                              onClick={() => navigate(`/franchise/students/edit/${id}`)}
+                              title="Edit"
                             >
-                              View
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-warning"
-                              onClick={() => {
-                                // Navigate to edit page or open edit modal
-                                navigate(`/franchise/students/edit/${student._id || student.id}`);
-                              }}
-                            >
-                              Edit
+                              <i className="bi bi-pencil"></i>
                             </button>
                             <button
                               className="btn btn-sm btn-outline-danger"
-                              onClick={() => handleDelete(student._id || student.id)}
+                              onClick={() => handleDelete(id)}
+                              title="Delete"
                             >
-                              Delete
+                              <i className="bi bi-trash"></i>
                             </button>
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* View Details Modal */}
-        {viewing && (
-          <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-            <div className="modal-dialog modal-dialog-centered modal-lg">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">
-                    Student Details - {viewing.name || "Unknown"}
-                  </h5>
-                  <button type="button" className="btn-close" onClick={() => setViewing(null)}></button>
-                </div>
-                <div className="modal-body">
-                  <div className="row">
-                    {/* Personal Information */}
-                    <div className="col-md-6 mb-3">
-                      <h6 className="border-bottom pb-2 mb-3">Personal Information</h6>
-                      <p className="mb-1"><strong>Name:</strong> {viewing.name || "-"}</p>
-                      <p className="mb-1"><strong>Father's Name:</strong> {viewing.fatherName || "-"}</p>
-                      <p className="mb-1"><strong>Mother's Name:</strong> {viewing.motherName || "-"}</p>
-                      <p className="mb-1"><strong>Gender:</strong> {viewing.gender || "-"}</p>
-                      <p className="mb-1"><strong>Date of Birth:</strong> {viewing.dob ? new Date(viewing.dob).toLocaleDateString('en-IN') : "-"}</p>
-                    </div>
-                    
-                    {/* Contact Information */}
-                    <div className="col-md-6 mb-3">
-                      <h6 className="border-bottom pb-2 mb-3">Contact Information</h6>
-                      <p className="mb-1"><strong>Email:</strong> {viewing.email || "-"}</p>
-                      <p className="mb-1"><strong>Mobile:</strong> {viewing.mobile || "-"}</p>
-                      <p className="mb-1"><strong>State:</strong> {viewing.state || "-"}</p>
-                      <p className="mb-1"><strong>District:</strong> {viewing.district || "-"}</p>
-                      <p className="mb-1"><strong>Address:</strong> {viewing.address || "-"}</p>
-                    </div>
-
-                    {/* Academic Information */}
-                    <div className="col-md-6 mb-3">
-                      <h6 className="border-bottom pb-2 mb-3">Academic Information</h6>
-                      <p className="mb-1"><strong>Roll Number:</strong> {viewing.rollNumber || "-"}</p>
-                      <p className="mb-1"><strong>Enrollment No:</strong> {viewing.enrollmentNo || viewing.enrollment || "-"}</p>
-                      <p className="mb-1"><strong>Course:</strong> {viewing.courseName || (viewing.courses && viewing.courses[0]?.courseName) || "-"}</p>
-                      <p className="mb-1"><strong>Exam Passed:</strong> {viewing.examPassed || "-"}</p>
-                      <p className="mb-1"><strong>Board:</strong> {viewing.board || "-"}</p>
-                      <p className="mb-1"><strong>Marks/Grade:</strong> {viewing.marksOrGrade || "-"}</p>
-                    </div>
-
-                    {/* Fee Details */}
-                    <div className="col-md-6 mb-3">
-                      <h6 className="border-bottom pb-2 mb-3">Fee Details</h6>
-                      {(() => {
-                        const feeDetails = viewing.courses && Array.isArray(viewing.courses) && viewing.courses.length > 0
-                          ? {
-                              fee: viewing.courses.reduce((sum, c) => sum + (Number(c.feeAmount) || 0), 0),
-                              paid: viewing.courses.reduce((sum, c) => sum + (Number(c.amountPaid) || 0), 0),
-                            }
-                          : { fee: Number(viewing.feeAmount) || 0, paid: Number(viewing.amountPaid) || 0 };
-                        const pending = feeDetails.fee - feeDetails.paid;
-                        return (
-                          <>
-                            <p className="mb-1"><strong>Total Fee:</strong> ₹{feeDetails.fee}</p>
-                            <p className="mb-1"><strong>Amount Paid:</strong> ₹{feeDetails.paid}</p>
-                            <p className="mb-1">
-                              <strong>Pending:</strong>{" "}
-                              <span className={pending > 0 ? "text-danger" : "text-success"}>
-                                ₹{pending}
-                              </span>
-                            </p>
-                            <p className="mb-1"><strong>Fees Paid:</strong> {viewing.feesPaid ? "Yes" : "No"}</p>
-                          </>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Additional Info */}
-                    <div className="col-12 mb-3">
-                      <h6 className="border-bottom pb-2 mb-3">Additional Information</h6>
-                      <p className="mb-1"><strong>Session:</strong> {viewing.sessionStart && viewing.sessionEnd ? `${new Date(viewing.sessionStart).toLocaleDateString('en-IN')} - ${new Date(viewing.sessionEnd).toLocaleDateString('en-IN')}` : "-"}</p>
-                      <p className="mb-1"><strong>Join Date:</strong> {viewing.joinDate || viewing.createdAt ? new Date(viewing.joinDate || viewing.createdAt).toLocaleDateString('en-IN') : "-"}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button className="btn btn-secondary" onClick={() => setViewing(null)}>
-                    Close
-                  </button>
-                </div>
-              </div>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+
+    </FranchiseLayout>
   );
 }

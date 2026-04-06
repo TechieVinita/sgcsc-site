@@ -1,333 +1,400 @@
-// src/pages/FranchiseTypingCertificateList.jsx
-import { useEffect, useMemo, useState } from "react";
+// src/pages/FranchiseTypingCertificateCreate.jsx
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
-import Sidebar from "./FranchiseDashboard";
+import { FranchiseLayout } from "./FranchiseStudents";
 
-function fmtDate(d) {
-  if (!d) return "-";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "-";
-  return dt.toLocaleDateString("en-IN");
-}
+// Typing Certificate Generator Global Reference
+let typingCertificateGenerator = null;
 
-export default function FranchiseTypingCertificateList() {
+const initTypingCertificateGenerator = async () => {
+  if (typingCertificateGenerator) return typingCertificateGenerator;
+
+  const canvasElement = document.getElementById("typingCertCanvas");
+  if (!canvasElement) {
+    console.warn("Canvas element not found in DOM yet. Waiting...");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  if (window.TypingCertificateGenerator) {
+    typingCertificateGenerator = window.TypingCertificateGenerator;
+    try {
+      await typingCertificateGenerator.loadTemplate(
+        "/typing-certificate-template.jpeg"
+      );
+      return typingCertificateGenerator;
+    } catch (err) {
+      throw new Error(`Template required: ${err.message}`);
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    if (!window.jspdf) {
+      const jspdfScript = document.createElement("script");
+      jspdfScript.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      jspdfScript.onload = () => {
+        const certScript = document.createElement("script");
+        certScript.src = "/typing-certificate-generator.js";
+        certScript.onload = async () => {
+          if (window.TypingCertificateGenerator) {
+            typingCertificateGenerator = window.TypingCertificateGenerator;
+            try {
+              await typingCertificateGenerator.loadTemplate(
+                "/typing-certificate-template.jpeg"
+              );
+              resolve(typingCertificateGenerator);
+            } catch (err) {
+              reject(new Error(`Template required: ${err.message}`));
+            }
+          } else {
+            reject(
+              new Error("Typing certificate generator script failed to load")
+            );
+          }
+        };
+        certScript.onerror = () =>
+          reject(
+            new Error("Failed to load typing certificate generator script")
+          );
+        document.body.appendChild(certScript);
+      };
+      jspdfScript.onerror = () =>
+        reject(new Error("Failed to load jspdf script"));
+      document.body.appendChild(jspdfScript);
+    } else if (!window.TypingCertificateGenerator) {
+      const certScript = document.createElement("script");
+      certScript.src = "/typing-certificate-generator.js";
+      certScript.onload = async () => {
+        if (window.TypingCertificateGenerator) {
+          typingCertificateGenerator = window.TypingCertificateGenerator;
+          try {
+            await typingCertificateGenerator.loadTemplate(
+              "/typing-certificate-template.jpeg"
+            );
+            resolve(typingCertificateGenerator);
+          } catch (err) {
+            reject(new Error(`Template required: ${err.message}`));
+          }
+        } else {
+          reject(
+            new Error("Typing certificate generator script failed to load")
+          );
+        }
+      };
+      certScript.onerror = () =>
+        reject(
+          new Error("Failed to load typing certificate generator script")
+        );
+      document.body.appendChild(certScript);
+    }
+  });
+};
+
+export default function FranchiseTypingCertificateCreate() {
   const navigate = useNavigate();
-  const [certificates, setCertificates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState("");
-  const [msgType, setMsgType] = useState("info");
-  const [franchise, setFranchise] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const [search, setSearch] = useState("");
+  const [formData, setFormData] = useState({
+    studentName: "",
+    fatherHusbandName: "",
+    motherName: "",
+    enrollmentNumber: "",
+    computerTyping: "",
+    certificateNo: "",
+    dateOfIssue: "",
+  });
 
-  // Get franchise info
-  useEffect(() => {
-    const fetchFranchise = async () => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const validateForm = () => {
+    if (!formData.studentName.trim()) {
+      setError("Student Name is required");
+      return false;
+    }
+    if (!formData.fatherHusbandName.trim()) {
+      setError("Father/Husband Name is required");
+      return false;
+    }
+    if (!formData.motherName.trim()) {
+      setError("Mother Name is required");
+      return false;
+    }
+    if (!formData.enrollmentNumber.trim()) {
+      setError("Enrollment Number is required");
+      return false;
+    }
+    if (!formData.computerTyping.trim()) {
+      setError("Computer Typing is required");
+      return false;
+    }
+    if (!formData.certificateNo.trim()) {
+      setError("Certificate Number is required");
+      return false;
+    }
+    if (!formData.dateOfIssue) {
+      setError("Date of Issue is required");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!validateForm()) return;
+
+    setSaving(true);
+
+    try {
+      let certificateImage = null;
       try {
-        const res = await API.get("/franchise-profile/me");
-        setFranchise(res.data?.data || null);
-      } catch (err) {
-        console.error("fetchFranchise error:", err);
+        await initTypingCertificateGenerator();
+      } catch (genErr) {
+        setError(`Certificate generation failed: ${genErr.message}`);
+        return;
       }
-    };
-    fetchFranchise();
-  }, []);
 
-  const fetchCertificates = async () => {
-    setLoading(true);
-    setMsg("");
-    try {
-      const res = await API.get("/franchise/typing-certificates");
-      const arr = Array.isArray(res.data) ? res.data : [];
-      setCertificates(arr);
+      if (typingCertificateGenerator) {
+        try {
+          const certificateData = {
+            studentName: formData.studentName.trim(),
+            fatherHusbandName: formData.fatherHusbandName.trim(),
+            motherName: formData.motherName.trim(),
+            enrollmentNumber: formData.enrollmentNumber.trim(),
+            computerTyping: formData.computerTyping.trim(),
+            certificateNo: formData.certificateNo.trim(),
+            dateOfIssue: formData.dateOfIssue,
+          };
+          certificateImage =
+            await typingCertificateGenerator.getDataURL(certificateData);
+        } catch (imgErr) {
+          console.error("Could not generate typing certificate image:", imgErr);
+          setError(
+            "Failed to generate certificate image. Please ensure the JPG template is properly configured."
+          );
+          return;
+        }
+      } else {
+        setError(
+          "Certificate generator not available. Please refresh the page."
+        );
+        return;
+      }
+
+      const payload = {
+        studentName: formData.studentName.trim(),
+        fatherHusbandName: formData.fatherHusbandName.trim(),
+        motherName: formData.motherName.trim(),
+        enrollmentNumber: formData.enrollmentNumber.trim(),
+        computerTyping: formData.computerTyping.trim(),
+        certificateNo: formData.certificateNo.trim(),
+        dateOfIssue: formData.dateOfIssue,
+        certificateImage,
+      };
+
+      await API.post("/franchise/typing-certificates", payload);
+
+      navigate("/franchise/typing-certificates", {
+        state: { message: "Typing certificate created successfully!" },
+      });
     } catch (err) {
-      console.error("fetch typing certificates", err);
-      setMsgType("danger");
-      setMsg(err.response?.data?.message || err.userMessage || "Failed to fetch certificates");
+      console.error("Create typing certificate error:", err);
+      setError(err.response?.data?.message || "Failed to create certificate");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  };
-
-  useEffect(() => {
-    fetchCertificates();
-  }, []);
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this typing certificate?")) return;
-    setMsg("");
-    try {
-      await API.delete(`/franchise/typing-certificates/${id}`);
-      setCertificates((prev) => prev.filter((c) => c._id !== id));
-      setMsgType("success");
-      setMsg("Typing certificate deleted.");
-    } catch (err) {
-      console.error("delete typing certificate", err);
-      setMsgType("danger");
-      setMsg(err.response?.data?.message || "Failed to delete certificate");
-    }
-  };
-
-  const filteredCertificates = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return certificates;
-
-    return certificates.filter((c) => {
-      const studentName = (c.studentName || "").toLowerCase();
-      const enrollmentNumber = (c.enrollmentNumber || "").toLowerCase();
-      const certificateNo = (c.certificateNo || "").toLowerCase();
-      return studentName.includes(q) || enrollmentNumber.includes(q) || certificateNo.includes(q);
-    });
-  }, [certificates, search]);
-
-  // Print certificate
-  const handlePrint = (certificate) => {
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Typing Certificate - ${certificate.certificateNo}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Times New Roman', serif; padding: 20px; }
-            .certificate {
-              border: 5px double #1a365d;
-              padding: 40px;
-              max-width: 800px;
-              margin: 0 auto;
-              text-align: center;
-              background: #fff;
-            }
-            .certificate h1 {
-              font-size: 32px;
-              color: #1a365d;
-              margin-bottom: 10px;
-              text-transform: uppercase;
-            }
-            .certificate h2 {
-              font-size: 24px;
-              color: #2d3748;
-              margin: 20px 0;
-              font-weight: normal;
-            }
-            .certificate .content {
-              font-size: 16px;
-              line-height: 2;
-              color: #2d3748;
-            }
-            .certificate .name {
-              font-size: 28px;
-              font-weight: bold;
-              color: #1a365d;
-              margin: 20px 0;
-              text-decoration: underline;
-            }
-            .certificate .details {
-              margin: 30px 0;
-            }
-            .certificate .details table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            .certificate .details td {
-              padding: 8px;
-              text-align: left;
-            }
-            .certificate .details td:first-child {
-              font-weight: bold;
-              width: 40%;
-            }
-            @media print {
-              body { padding: 0; }
-              .certificate { border: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="certificate">
-            <h1>Typing Certificate</h1>
-            <div class="content">This is to certify that</div>
-
-            <div class="name">${certificate.studentName}</div>
-
-            <div class="content">
-              has successfully completed computer typing training with the following details:
-            </div>
-
-            <div class="details">
-              <table>
-                <tbody>
-                  <tr>
-                    <td>Father/Husband Name:</td>
-                    <td>${certificate.fatherHusbandName}</td>
-                  </tr>
-                  <tr>
-                    <td>Mother Name:</td>
-                    <td>${certificate.motherName}</td>
-                  </tr>
-                  <tr>
-                    <td>Enrollment Number:</td>
-                    <td>${certificate.enrollmentNumber}</td>
-                  </tr>
-                  <tr>
-                    <td>Computer Typing:</td>
-                    <td>${certificate.computerTyping}</td>
-                  </tr>
-                  <tr>
-                    <td>Certificate Number:</td>
-                    <td>${certificate.certificateNo}</td>
-                  </tr>
-                  <tr>
-                    <td>Date of Issue:</td>
-                    <td>${fmtDate(certificate.dateOfIssue)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
   };
 
   return (
-    <div className="d-flex">
-      <Sidebar franchise={franchise} />
+    <FranchiseLayout>
+      {/* FIX: removed two stray </div></div> that appeared before <canvas> and </FranchiseLayout> */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="mb-1">Create Typing Certificate</h2>
+          <p className="text-muted mb-0">
+            Generate certificate for computer typing training completion
+          </p>
+        </div>
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => navigate("/franchise/typing-certificates")}
+        >
+          <i className="bi bi-arrow-left me-1"></i>
+          Back to List
+        </button>
+      </div>
 
-      <div
-        className="flex-grow-1 bg-light min-vh-100"
-        style={{ marginLeft: "260px" }}
-      >
-        <div className="container-fluid p-4">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h2 className="mb-1">Typing Certificates</h2>
-              <p className="text-muted mb-0">Manage computer typing training certificates</p>
-            </div>
-            <div className="d-flex gap-2">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search certificates..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ width: "250px" }}
-              />
-              <button
-                className="btn btn-outline-secondary"
-                onClick={fetchCertificates}
-                disabled={loading}
-              >
-                {loading ? "Loading..." : "Refresh"}
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => navigate("/franchise/typing-certificates/create")}
-              >
-                Create Certificate
-              </button>
-            </div>
-          </div>
-
-          {msg && (
-            <div className={`alert alert-${msgType} alert-dismissible fade show`} role="alert">
-              {msg}
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setMsg("")}
-                aria-label="Close"
-              ></button>
-            </div>
-          )}
-
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
           <div className="card shadow-sm">
-            <div className="card-body p-0">
-              {loading ? (
-                <div className="p-4 text-center text-muted">
-                  <div className="spinner-border" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  <div className="mt-2">Loading certificates...</div>
+            <div className="card-body p-4">
+              {error && (
+                <div
+                  className="alert alert-danger alert-dismissible fade show"
+                  role="alert"
+                >
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                  {error}
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setError("")}
+                    aria-label="Close"
+                  ></button>
                 </div>
-              ) : filteredCertificates.length === 0 ? (
-                <div className="p-4 text-center text-muted">
-                  <i className="bi bi-inbox fs-2 mb-2 d-block"></i>
-                  No typing certificates found.
-                  <div className="mt-2">
+              )}
+
+              <form onSubmit={handleSubmit}>
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Student Name <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="studentName"
+                      value={formData.studentName}
+                      onChange={handleInputChange}
+                      placeholder="Enter student full name"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Father/Husband Name <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="fatherHusbandName"
+                      value={formData.fatherHusbandName}
+                      onChange={handleInputChange}
+                      placeholder="Enter father or husband name"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Mother Name <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="motherName"
+                      value={formData.motherName}
+                      onChange={handleInputChange}
+                      placeholder="Enter mother name"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Enrollment Number <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="enrollmentNumber"
+                      value={formData.enrollmentNumber}
+                      onChange={handleInputChange}
+                      placeholder="Enter enrollment number"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Computer Typing <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="computerTyping"
+                      value={formData.computerTyping}
+                      onChange={handleInputChange}
+                      placeholder="e.g., English/Hindi Typing"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Certificate Number <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="certificateNo"
+                      value={formData.certificateNo}
+                      onChange={handleInputChange}
+                      placeholder="Enter certificate number"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Date of Issue <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      name="dateOfIssue"
+                      value={formData.dateOfIssue}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12 mt-4">
                     <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => navigate("/franchise/typing-certificates/create")}
+                      type="submit"
+                      className="btn btn-primary w-100"
+                      disabled={saving}
                     >
-                      Create Your First Certificate
+                      {saving ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                          ></span>
+                          Creating Certificate...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-plus-circle me-2"></i>
+                          Create Typing Certificate
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-primary">
-                      <tr>
-                        <th>Student Name</th>
-                        <th>Father/Husband Name</th>
-                        <th>Enrollment No</th>
-                        <th>Certificate No</th>
-                        <th>Computer Typing</th>
-                        <th>Date of Issue</th>
-                        <th className="text-center">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredCertificates.map((c) => (
-                        <tr key={c._id || c.id}>
-                          <td>{c.studentName}</td>
-                          <td>{c.fatherHusbandName}</td>
-                          <td>{c.enrollmentNumber}</td>
-                          <td>{c.certificateNo}</td>
-                          <td>{c.computerTyping}</td>
-                          <td>{fmtDate(c.dateOfIssue)}</td>
-                          <td className="text-center">
-                            <button
-                              className="btn btn-sm btn-outline-info me-2"
-                              onClick={() => handlePrint(c)}
-                              title="Print Certificate"
-                            >
-                              View
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-warning me-2"
-                              onClick={() =>
-                                navigate(`/franchise/typing-certificates/edit/${c._id || c.id}`)
-                              }
-                              title="Edit Certificate"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => handleDelete(c._id || c.id)}
-                              title="Delete Certificate"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              </form>
             </div>
+          </div>
+
+          <div className="alert alert-info mt-4" role="alert">
+            <i className="bi bi-info-circle-fill me-2"></i>
+            <strong>Note:</strong> Make sure all JPG template files are uploaded
+            to the server before creating certificates. The system requires{" "}
+            <code>typing-certificate-template.jpeg</code> to generate
+            certificates.
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Hidden canvas for typing certificate rendering */}
+      <canvas id="typingCertCanvas" style={{ display: "none" }}></canvas>
+    </FranchiseLayout>
   );
 }

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
-import Sidebar from "./FranchiseDashboard";
+import { FranchiseLayout } from "./FranchiseStudents";
 
 export default function FranchiseCreateSubject() {
   const navigate = useNavigate();
@@ -12,6 +12,8 @@ export default function FranchiseCreateSubject() {
 
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
+  // FIX: franchiseId fetched from API instead of referencing undefined `franchise`
+  const [franchiseId, setFranchiseId] = useState(null);
 
   const [courseId, setCourseId] = useState("");
   const [name, setName] = useState("");
@@ -21,19 +23,18 @@ export default function FranchiseCreateSubject() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [initialLoaded, setInitialLoaded] = useState(false);
-  const [franchise, setFranchise] = useState(null);
 
-  // Get franchise info
+  // Load franchise profile
   useEffect(() => {
-    const fetchFranchise = async () => {
+    const loadProfile = async () => {
       try {
-        const res = await API.get("/franchise-profile/me");
-        setFranchise(res.data?.data || null);
+        const res = await API.get("/franchise/profile");
+        setFranchiseId((res.data?._id || res.data?.id || "").toString());
       } catch (err) {
-        console.error("fetchFranchise error:", err);
+        console.error("Failed to load franchise profile:", err);
       }
     };
-    fetchFranchise();
+    loadProfile();
   }, []);
 
   /* ----------------------------------------------------
@@ -75,8 +76,8 @@ export default function FranchiseCreateSubject() {
         const res = await API.get(`/franchise/subjects/${subjectId}`);
         const s = res.data || {};
 
-        // Check if the subject belongs to this franchise
-        if (s.createdBy && franchise && s.createdBy !== franchise._id) {
+        // FIX: use franchiseId state instead of undefined `franchise`
+        if (s.createdBy && franchiseId && s.createdBy !== franchiseId) {
           setError("You can only edit subjects you created.");
           return;
         }
@@ -99,7 +100,7 @@ export default function FranchiseCreateSubject() {
     };
 
     loadSubject();
-  }, [subjectId, courses, franchise]);
+  }, [subjectId, courses, franchiseId]);
 
   /* ----------------------------------------------------
      Submit
@@ -135,9 +136,7 @@ export default function FranchiseCreateSubject() {
       navigate("/franchise/subjects");
     } catch (err) {
       console.error("save subject", err);
-      setError(
-        err?.response?.data?.message || "Failed to save subject"
-      );
+      setError(err?.response?.data?.message || "Failed to save subject");
     } finally {
       setSaving(false);
     }
@@ -147,132 +146,118 @@ export default function FranchiseCreateSubject() {
 
   if (!initialLoaded && subjectId) {
     return (
-      <div className="d-flex">
-        <Sidebar franchise={franchise} />
-        <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
-          <div className="d-flex justify-content-center align-items-center py-5">
-            <div className="spinner-border text-primary me-2" />
-            Loading subject…
-          </div>
+      <FranchiseLayout>
+        <div className="d-flex justify-content-center align-items-center py-5">
+          <div className="spinner-border text-primary me-2" />
+          Loading subject…
         </div>
-      </div>
+      </FranchiseLayout>
     );
   }
 
   return (
-    <div className="d-flex">
-      <Sidebar franchise={franchise} />
-      <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-          <div>
-            <h2 className="fw-bold mb-1">
-              {subjectId ? "Edit Subject" : "Create Subject"}
-            </h2>
-            <small className="text-muted">
-              {subjectId 
-                ? "Update your subject details." 
-                : "Creating a new subject will deduct credits from your account."}
-            </small>
+    <FranchiseLayout>
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h2 className="fw-bold mb-1">
+            {subjectId ? "Edit Subject" : "Create Subject"}
+          </h2>
+          <small className="text-muted">
+            {subjectId
+              ? "Update your subject details."
+              : "Creating a new subject will deduct credits from your account."}
+          </small>
+        </div>
+        <button
+          className="btn btn-outline-secondary"
+          onClick={handleCancel}
+          disabled={saving}
+        >
+          Back to Subjects
+        </button>
+      </div>
+
+      {error && <div className="alert alert-danger">{error}</div>}
+
+      <form
+        onSubmit={handleSubmit}
+        className="card shadow-sm p-4"
+        style={{ maxWidth: 700 }}
+      >
+        <div className="mb-3">
+          <label className="form-label">
+            Course <span className="text-danger">*</span>
+          </label>
+          <select
+            className="form-select"
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            disabled={loadingCourses}
+            required
+          >
+            <option value="">
+              {loadingCourses ? "Loading courses…" : "Select course"}
+            </option>
+            {courses.map((c) => (
+              <option key={c._id} value={String(c._id)}>
+                {c.title || c.name || "Untitled course"}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">
+            Subject Name <span className="text-danger">*</span>
+          </label>
+          <input
+            className="form-control"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Computer Fundamentals"
+            required
+          />
+        </div>
+
+        <div className="row g-3">
+          <div className="col-md-6">
+            <label className="form-label">Maximum Marks</label>
+            <input
+              type="number"
+              min="0"
+              className="form-control"
+              value={maxMarks}
+              onChange={(e) => setMaxMarks(e.target.value)}
+              placeholder="100"
+            />
           </div>
+          <div className="col-md-6">
+            <label className="form-label">Minimum Marks</label>
+            <input
+              type="number"
+              min="0"
+              className="form-control"
+              value={minMarks}
+              onChange={(e) => setMinMarks(e.target.value)}
+              placeholder="35"
+            />
+          </div>
+        </div>
+
+        <div className="d-flex justify-content-end mt-4">
           <button
-            className="btn btn-outline-secondary"
+            type="button"
+            className="btn btn-outline-secondary me-2"
             onClick={handleCancel}
             disabled={saving}
           >
-            Back to Subjects
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "Saving…" : subjectId ? "Save Changes" : "Create Subject"}
           </button>
         </div>
-
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        <form
-          onSubmit={handleSubmit}
-          className="card shadow-sm p-4"
-          style={{ maxWidth: 700 }}
-        >
-          <div className="mb-3">
-            <label className="form-label">
-              Course <span className="text-danger">*</span>
-            </label>
-            <select
-              className="form-select"
-              value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
-              disabled={loadingCourses}
-              required
-            >
-              <option value="">
-                {loadingCourses ? "Loading courses…" : "Select course"}
-              </option>
-              {courses.map((c) => (
-                <option key={c._id} value={String(c._id)}>
-                  {c.title || c.name || "Untitled course"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">
-              Subject Name <span className="text-danger">*</span>
-            </label>
-            <input
-              className="form-control"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Computer Fundamentals"
-              required
-            />
-          </div>
-
-          <div className="row g-3">
-            <div className="col-md-6">
-              <label className="form-label">Maximum Marks</label>
-              <input
-                type="number"
-                min="0"
-                className="form-control"
-                value={maxMarks}
-                onChange={(e) => setMaxMarks(e.target.value)}
-                placeholder="100"
-              />
-            </div>
-            <div className="col-md-6">
-              <label className="form-label">Minimum Marks</label>
-              <input
-                type="number"
-                min="0"
-                className="form-control"
-                value={minMarks}
-                onChange={(e) => setMinMarks(e.target.value)}
-                placeholder="35"
-              />
-            </div>
-          </div>
-
-          <div className="d-flex justify-content-end mt-4">
-            <button
-              type="button"
-              className="btn btn-outline-secondary me-2"
-              onClick={handleCancel}
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={saving}
-            >
-              {saving
-                ? "Saving…"
-                : subjectId
-                ? "Save Changes"
-                : "Create Subject"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </FranchiseLayout>
   );
 }

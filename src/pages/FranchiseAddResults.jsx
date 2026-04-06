@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
-import Sidebar from "./FranchiseDashboard";
+import { FranchiseLayout } from "./FranchiseStudents";
 
 export default function FranchiseAddResults() {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export default function FranchiseAddResults() {
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [franchise, setFranchise] = useState(null);
+
 
   // Form selections
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -40,18 +40,7 @@ export default function FranchiseAddResults() {
   const [examDate, setExamDate] = useState("");
   const [remarks, setRemarks] = useState("");
 
-  // Get franchise info
-  useEffect(() => {
-    const fetchFranchise = async () => {
-      try {
-        const res = await API.get("/franchise-profile/me");
-        setFranchise(res.data?.data || null);
-      } catch (err) {
-        console.error("fetchFranchise error:", err);
-      }
-    };
-    fetchFranchise();
-  }, []);
+
 
   /* ================= FETCH STUDENTS (FRANCHISE'S OWN STUDENTS) ================= */
   useEffect(() => {
@@ -331,22 +320,17 @@ export default function FranchiseAddResults() {
 
   if (loading) {
     return (
-      <div className="d-flex">
-        <Sidebar franchise={franchise} />
-        <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
-          <div className="d-flex justify-content-center align-items-center py-5">
-            <div className="spinner-border text-primary me-2" />
-            Loading…
-          </div>
+      <FranchiseLayout>
+        <div className="d-flex justify-content-center align-items-center py-5">
+          <div className="spinner-border text-primary me-2" />
+          Loading…
         </div>
-      </div>
+      </FranchiseLayout>
     );
   }
 
   return (
-    <div className="d-flex">
-      <Sidebar franchise={franchise} />
-      <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
+    <FranchiseLayout>
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
           <div>
             <h2 className="fw-bold mb-1">
@@ -635,7 +619,6 @@ export default function FranchiseAddResults() {
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </FranchiseLayout>
   );
 }

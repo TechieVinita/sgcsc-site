@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 
-/* -------------------------
-   Helpers
--------------------------- */
 const formatDate = (dateString) => {
   if (!dateString) return "—";
   const date = new Date(dateString);
@@ -31,9 +28,75 @@ const transactionTypeBadge = (type) => {
   );
 };
 
-/* -------------------------
-   Sidebar Component
--------------------------- */
+function StatCard({ icon, label, value, color, loading }) {
+  const colorClasses = {
+    primary: "bg-primary bg-opacity-10 text-primary",
+    success: "bg-success bg-opacity-10 text-success",
+    info: "bg-info bg-opacity-10 text-info",
+    warning: "bg-warning bg-opacity-10 text-warning",
+    danger: "bg-danger bg-opacity-10 text-danger",
+  };
+
+  return (
+    <div className="card border-0 shadow-sm h-100">
+      <div className="card-body d-flex align-items-center p-4">
+        <div className={`rounded-circle p-3 me-3 ${colorClasses[color] || colorClasses.primary}`}>
+          <i className={`bi ${icon} fs-4`}></i>
+        </div>
+        <div>
+          <h6 className="text-muted mb-1">{label}</h6>
+          <h4 className="mb-0 fw-bold">{loading ? "—" : value}</h4>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function FranchiseDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [franchise, setFranchise] = useState(null);
+  const [credits, setCredits] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [stats, setStats] = useState({ students: 0, courses: 0, results: 0, certificates: 0 });
+
+  const loadDashboardData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [profileRes, creditsRes, transactionsRes] = await Promise.allSettled([
+        API.get("/franchise-profile/me"),
+        API.get("/credits/my-credits"),
+        API.get("/credits/my-transactions?limit=5"),
+      ]);
+
+      if (profileRes.status === "fulfilled")
+        setFranchise(profileRes.value.data?.data || profileRes.value.data);
+
+      if (creditsRes.status === "fulfilled")
+        setCredits(creditsRes.value.data?.data || null);
+
+      if (transactionsRes.status === "fulfilled")
+        setTransactions(transactionsRes.value.data?.data?.transactions || []);
+
+      setStats({ students: 0, courses: 0, results: 0, certificates: 0 });
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+      setError("Some dashboard data could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  const creditBalance = credits?.credits || 0;
+  const showLowCreditWarning = creditBalance < 20 && creditBalance > 0;
+  const showNoCreditWarning = creditBalance <= 0;
+
+// Sidebar for Franchise Panel
 function Sidebar({ franchise }) {
   const [openMenu, setOpenMenu] = useState(null);
   const navigate = useNavigate();
@@ -281,158 +344,49 @@ function Sidebar({ franchise }) {
   );
 }
 
-/* -------------------------
-   Stat Card Component
--------------------------- */
-function StatCard({ icon, label, value, color, loading }) {
-  const colorClasses = {
-    primary: "bg-primary bg-opacity-10 text-primary",
-    success: "bg-success bg-opacity-10 text-success",
-    info: "bg-info bg-opacity-10 text-info",
-    warning: "bg-warning bg-opacity-10 text-warning",
-    danger: "bg-danger bg-opacity-10 text-danger",
-  };
-
   return (
-    <div className="card border-0 shadow-sm h-100">
-      <div className="card-body d-flex align-items-center p-4">
-        <div className={`rounded-circle p-3 me-3 ${colorClasses[color] || colorClasses.primary}`}>
-          <i className={`bi ${icon} fs-4`}></i>
-        </div>
-        <div>
-          <h6 className="text-muted mb-1">{label}</h6>
-          <h4 className="mb-0 fw-bold">{loading ? "—" : value}</h4>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------
-   Main Dashboard Component
--------------------------- */
-export default function FranchiseDashboard() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const [franchise, setFranchise] = useState(null);
-  const [credits, setCredits] = useState(null);
-  const [transactions, setTransactions] = useState([]);
-  const [stats, setStats] = useState({
-    students: 0,
-    courses: 0,
-    results: 0,
-    certificates: 0,
-  });
-
-  /* -------------------------
-     Fetch Dashboard Data
-  -------------------------- */
-  const loadDashboardData = useCallback(async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      // Fetch franchise profile, credits, and transactions in parallel
-      const [profileRes, creditsRes, transactionsRes] = await Promise.allSettled([
-        API.get("/franchise-profile/me"),
-        API.get("/credits/my-credits"),
-        API.get("/credits/my-transactions?limit=5"),
-      ]);
-
-      // Handle profile
-      if (profileRes.status === "fulfilled") {
-        setFranchise(profileRes.value.data?.data || profileRes.value.data);
-      }
-
-      // Handle credits
-      if (creditsRes.status === "fulfilled") {
-        setCredits(creditsRes.value.data?.data || null);
-      }
-
-      // Handle transactions
-      if (transactionsRes.status === "fulfilled") {
-        setTransactions(transactionsRes.value.data?.data?.transactions || []);
-      }
-
-      // For stats, we'll use placeholder data since franchise-specific stats endpoints may not exist yet
-      // These can be updated when the backend endpoints are implemented
-      setStats({
-        students: 0,
-        courses: 0,
-        results: 0,
-        certificates: 0,
-      });
-    } catch (err) {
-      console.error("Dashboard load error:", err);
-      setError("Some dashboard data could not be loaded.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
-
-  const creditBalance = credits?.credits || 0;
-  const showLowCreditWarning = creditBalance < 20 && creditBalance > 0;
-  const showNoCreditWarning = creditBalance <= 0;
-
-  return (
-    <div className="d-flex">
+    <div className="d-flex min-vh-100 bg-light">
       {/* Sidebar */}
       <Sidebar franchise={franchise} />
-
+      
       {/* Main Content */}
-      <div
-        className="flex-grow-1 bg-light min-vh-100"
-        style={{ marginLeft: "260px" }}
-      >
+      <div className="flex-grow-1 bg-light min-vh-100" style={{ marginLeft: "260px" }}>
         <div className="container-fluid p-4">
+
           {/* Header */}
           <div className="d-flex justify-content-between align-items-start mb-4">
             <div>
               <h1 className="h3 mb-1">Franchise Dashboard</h1>
               <p className="text-muted mb-0">
-                Welcome back, <strong>{franchise?.instituteName || franchise?.ownerName || "Franchise"}</strong>
+                Welcome back,{" "}
+                <strong>{franchise?.instituteName || franchise?.ownerName || "Franchise"}</strong>
               </p>
             </div>
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={loadDashboardData}
-                disabled={loading}
-              >
-                <i className="bi bi-arrow-clockwise me-1"></i>
-                {loading ? "Refreshing…" : "Refresh"}
-              </button>
-            </div>
+            <button
+              className="btn btn-outline-secondary"
+              onClick={loadDashboardData}
+              disabled={loading}
+            >
+              <i className="bi bi-arrow-clockwise me-1"></i>
+              {loading ? "Refreshing…" : "Refresh"}
+            </button>
           </div>
 
-          {/* Error Alert */}
+          {/* Alerts */}
           {error && (
-            <div className="alert alert-warning alert-dismissible fade show" role="alert">
+            <div className="alert alert-danger alert-dismissible fade show mb-4" role="alert">
               <i className="bi bi-exclamation-triangle-fill me-2"></i>
               {error}
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setError("")}
-                aria-label="Close"
-              ></button>
+              <button type="button" className="btn-close" onClick={() => setError("")} aria-label="Close"></button>
             </div>
           )}
 
-          {/* Low Credit Warnings */}
           {showNoCreditWarning && (
             <div className="alert alert-danger d-flex align-items-center mb-4" role="alert">
               <i className="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
               <div>
-                <strong>Out of Credits!</strong> You have no credits remaining. 
-                <NavLink to="/franchise/credits" className="alert-link ms-1">
-                  Top up now
-                </NavLink>{" "}
+                <strong>Out of Credits!</strong> You have no credits remaining.{" "}
+                <NavLink to="/franchise/credits" className="alert-link">Top up now</NavLink>{" "}
                 to continue using services.
               </div>
             </div>
@@ -442,10 +396,8 @@ export default function FranchiseDashboard() {
             <div className="alert alert-warning d-flex align-items-center mb-4" role="alert">
               <i className="bi bi-info-circle-fill me-2 fs-5"></i>
               <div>
-                <strong>Low Credit Warning!</strong> You only have {creditBalance} credits left. 
-                <NavLink to="/franchise/credits" className="alert-link ms-1">
-                  Top up now
-                </NavLink>{" "}
+                <strong>Low Credit Warning!</strong> You only have {creditBalance} credits left.{" "}
+                <NavLink to="/franchise/credits" className="alert-link">Top up now</NavLink>{" "}
                 to avoid service interruption.
               </div>
             </div>
@@ -457,24 +409,12 @@ export default function FranchiseDashboard() {
               <div className="row align-items-center">
                 <div className="col-md-6">
                   <div className="d-flex align-items-center">
-                    <div
-                      className={`rounded-circle p-3 me-3 ${
-                        creditBalance < 20 ? "bg-danger bg-opacity-10" : "bg-success bg-opacity-10"
-                      }`}
-                    >
-                      <i
-                        className={`bi bi-wallet2 fs-3 ${
-                          creditBalance < 20 ? "text-danger" : "text-success"
-                        }`}
-                      ></i>
+                    <div className={`rounded-circle p-3 me-3 ${creditBalance < 20 ? "bg-danger bg-opacity-10" : "bg-success bg-opacity-10"}`}>
+                      <i className={`bi bi-wallet2 fs-3 ${creditBalance < 20 ? "text-danger" : "text-success"}`}></i>
                     </div>
                     <div>
                       <h6 className="text-muted mb-1">Credit Balance</h6>
-                      <h3
-                        className={`mb-0 ${
-                          creditBalance < 20 ? "text-danger" : "text-success"
-                        }`}
-                      >
+                      <h3 className={`mb-0 ${creditBalance < 20 ? "text-danger" : "text-success"}`}>
                         {loading ? "—" : creditBalance}
                         <small className="fs-6 text-muted ms-1">credits</small>
                       </h3>
@@ -483,8 +423,7 @@ export default function FranchiseDashboard() {
                 </div>
                 <div className="col-md-6 text-md-end mt-3 mt-md-0">
                   <NavLink to="/franchise/credits" className="btn btn-primary">
-                    <i className="bi bi-plus-circle me-2"></i>
-                    Top Up Credits
+                    <i className="bi bi-plus-circle me-2"></i>Top Up Credits
                   </NavLink>
                 </div>
               </div>
@@ -493,54 +432,25 @@ export default function FranchiseDashboard() {
 
           {/* Stats Grid */}
           <div className="row g-4 mb-4">
-            <div className="col-12 col-md-6 col-lg-3">
-              <StatCard
-                icon="bi-people"
-                label="Total Students"
-                value={stats.students}
-                color="primary"
-                loading={loading}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-3">
-              <StatCard
-                icon="bi-book"
-                label="Total Courses"
-                value={stats.courses}
-                color="info"
-                loading={loading}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-3">
-              <StatCard
-                icon="bi-clipboard-check"
-                label="Total Results"
-                value={stats.results}
-                color="warning"
-                loading={loading}
-              />
-            </div>
-            <div className="col-12 col-md-6 col-lg-3">
-              <StatCard
-                icon="bi-award"
-                label="Total Certificates"
-                value={stats.certificates}
-                color="success"
-                loading={loading}
-              />
-            </div>
+            {[
+              { icon: "bi-people", label: "Total Students", value: stats.students, color: "primary" },
+              { icon: "bi-book", label: "Total Courses", value: stats.courses, color: "info" },
+              { icon: "bi-clipboard-check", label: "Total Results", value: stats.results, color: "warning" },
+              { icon: "bi-award", label: "Total Certificates", value: stats.certificates, color: "success" },
+            ].map((s) => (
+              <div key={s.label} className="col-12 col-md-6 col-lg-3">
+                <StatCard {...s} loading={loading} />
+              </div>
+            ))}
           </div>
 
           {/* Recent Activity */}
-          <div className="card border-0 shadow-sm">
+          <div className="card border-0 shadow-sm mb-4">
             <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
               <h5 className="mb-0">
-                <i className="bi bi-clock-history me-2 text-primary"></i>
-                Recent Activity
+                <i className="bi bi-clock-history me-2 text-primary"></i>Recent Activity
               </h5>
-              <NavLink to="/franchise/credits" className="btn btn-sm btn-outline-primary">
-                View All
-              </NavLink>
+              <NavLink to="/franchise/credits" className="btn btn-sm btn-outline-primary">View All</NavLink>
             </div>
             <div className="card-body p-0">
               {transactions.length === 0 ? (
@@ -553,11 +463,8 @@ export default function FranchiseDashboard() {
                   <table className="table table-hover align-middle mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th className="text-end">Amount</th>
-                        <th className="text-end">Balance</th>
+                        <th>Date</th><th>Type</th><th>Description</th>
+                        <th className="text-end">Amount</th><th className="text-end">Balance</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -567,18 +474,11 @@ export default function FranchiseDashboard() {
                           <td>{transactionTypeBadge(tx.type)}</td>
                           <td>{tx.description || "—"}</td>
                           <td className="text-end">
-                            <span
-                              className={`fw-semibold ${
-                                tx.type === "topup" ? "text-success" : "text-danger"
-                              }`}
-                            >
-                              {tx.type === "topup" ? "+" : "-"}
-                              {tx.amount}
+                            <span className={`fw-semibold ${tx.type === "topup" ? "text-success" : "text-danger"}`}>
+                              {tx.type === "topup" ? "+" : "-"}{tx.amount}
                             </span>
                           </td>
-                          <td className="text-end">
-                            <span className="text-muted">{tx.balanceAfter}</span>
-                          </td>
+                          <td className="text-end"><span className="text-muted">{tx.balanceAfter}</span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -588,56 +488,26 @@ export default function FranchiseDashboard() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Actions */}
           <div className="row g-4 mt-2">
-            <div className="col-12">
-              <h5 className="mb-3">Quick Actions</h5>
-            </div>
-            <div className="col-6 col-md-3">
-              <NavLink
-                to="/franchise/students/add"
-                className="card text-decoration-none border-0 shadow-sm h-100"
-              >
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-person-plus fs-2 text-primary mb-2"></i>
-                  <h6 className="mb-0">Add Student</h6>
-                </div>
-              </NavLink>
-            </div>
-            <div className="col-6 col-md-3">
-              <NavLink
-                to="/franchise/results/add"
-                className="card text-decoration-none border-0 shadow-sm h-100"
-              >
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-clipboard-plus fs-2 text-warning mb-2"></i>
-                  <h6 className="mb-0">Add Result</h6>
-                </div>
-              </NavLink>
-            </div>
-            <div className="col-6 col-md-3">
-              <NavLink
-                to="/franchise/certificates/create"
-                className="card text-decoration-none border-0 shadow-sm h-100"
-              >
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-award fs-2 text-success mb-2"></i>
-                  <h6 className="mb-0">Create Certificate</h6>
-                </div>
-              </NavLink>
-            </div>
-            <div className="col-6 col-md-3">
-              <NavLink
-                to="/franchise/profile"
-                className="card text-decoration-none border-0 shadow-sm h-100"
-              >
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-person-circle fs-2 text-info mb-2"></i>
-                  <h6 className="mb-0">View Profile</h6>
-                </div>
-              </NavLink>
-            </div>
+            <div className="col-12"><h5 className="mb-3">Quick Actions</h5></div>
+            {[
+              { to: "/franchise/students/add", icon: "bi-person-plus", color: "text-primary", label: "Add Student" },
+              { to: "/franchise/results/add", icon: "bi-clipboard-plus", color: "text-warning", label: "Add Result" },
+              { to: "/franchise/certificates/create", icon: "bi-award", color: "text-success", label: "Create Certificate" },
+              { to: "/franchise/profile", icon: "bi-person-circle", color: "text-info", label: "View Profile" },
+            ].map((action) => (
+              <div key={action.to} className="col-6 col-md-3">
+                <NavLink to={action.to} className="card text-decoration-none border-0 shadow-sm h-100">
+                  <div className="card-body text-center p-4">
+                    <i className={`bi ${action.icon} fs-2 ${action.color} mb-2`}></i>
+                    <h6 className="mb-0">{action.label}</h6>
+                  </div>
+                </NavLink>
+              </div>
+            ))}
           </div>
+
         </div>
       </div>
     </div>

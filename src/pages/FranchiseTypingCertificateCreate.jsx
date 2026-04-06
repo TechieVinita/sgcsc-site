@@ -1,157 +1,184 @@
-// src/pages/FranchiseTypingCertificateCreate.jsx
+// src/pages/FranchiseCertificateCreate.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
-import Sidebar from "./FranchiseDashboard";
+import { FranchiseLayout } from "./FranchiseStudents";
 
-// Typing Certificate Generator Global Reference
-let typingCertificateGenerator = null;
-
-// Initialize Typing Certificate Generator function
-const initTypingCertificateGenerator = async () => {
-  if (typingCertificateGenerator) return typingCertificateGenerator;
-
-  // Ensure canvas is available before loading template
-  const canvasElement = document.getElementById('typingCertCanvas');
-  if (!canvasElement) {
-    console.warn('Canvas element not found in DOM yet. Waiting...');
-    // Wait for canvas to be available
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-
-  // Check if already available on window
-  if (window.TypingCertificateGenerator) {
-    typingCertificateGenerator = window.TypingCertificateGenerator;
-    try {
-      await typingCertificateGenerator.loadTemplate('/typing-certificate-template.jpeg');
-      console.log('Typing certificate template loaded successfully');
-      return typingCertificateGenerator;
-    } catch (err) {
-      console.error('CRITICAL ERROR: Typing certificate template not found:', err.message);
-      console.error('Please upload typing-certificate-template.jpeg to the public folder');
-      throw new Error(`Template required: ${err.message}`);
-    }
-  }
-
-  // Script not loaded yet, dynamically load it
-  return new Promise((resolve, reject) => {
-    // Load jspdf if not present
-    if (!window.jspdf) {
-      const jspdfScript = document.createElement('script');
-      jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      jspdfScript.onload = () => {
-        // Load typing-certificate-generator
-        const certScript = document.createElement('script');
-        certScript.src = '/typing-certificate-generator.js';
-        certScript.onload = async () => {
-          if (window.TypingCertificateGenerator) {
-            typingCertificateGenerator = window.TypingCertificateGenerator;
-            try {
-              await typingCertificateGenerator.loadTemplate('/typing-certificate-template.jpeg');
-              console.log('Typing certificate template loaded successfully');
-              resolve(typingCertificateGenerator);
-            } catch (err) {
-              console.error('CRITICAL ERROR: Typing certificate template not found:', err.message);
-              reject(new Error(`Template required: ${err.message}`));
-            }
-          } else {
-            reject(new Error('Typing certificate generator script failed to load'));
-          }
-        };
-        certScript.onerror = () => reject(new Error('Failed to load typing certificate generator script'));
-        document.body.appendChild(certScript);
-      };
-      jspdfScript.onerror = () => reject(new Error('Failed to load jspdf script'));
-      document.body.appendChild(jspdfScript);
-    } else if (!window.TypingCertificateGenerator) {
-      // jspdf loaded but typing-certificate-generator not loaded
-      const certScript = document.createElement('script');
-      certScript.src = '/typing-certificate-generator.js';
-      certScript.onload = async () => {
-        if (window.TypingCertificateGenerator) {
-          typingCertificateGenerator = window.TypingCertificateGenerator;
-          try {
-            await typingCertificateGenerator.loadTemplate('/typing-certificate-template.jpeg');
-            console.log('Typing certificate template loaded successfully');
-            resolve(typingCertificateGenerator);
-          } catch (err) {
-            console.error('CRITICAL ERROR: Typing certificate template not found:', err.message);
-            reject(new Error(`Template required: ${err.message}`));
-          }
-        } else {
-          reject(new Error('Typing certificate generator script failed to load'));
-        }
-      };
-      certScript.onerror = () => reject(new Error('Failed to load typing certificate generator script'));
-      document.body.appendChild(certScript);
-    }
-  });
-};
-
-export default function FranchiseTypingCertificateCreate() {
+export default function FranchiseCertificateCreate() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const certificateId = params.get("id");
+  const isEditMode = Boolean(certificateId);
+
+  // Form fields
+  const [enrollmentNumber, setEnrollmentNumber] = useState("");
+  const [dob, setDob] = useState("");
+  const [name, setName] = useState("");
+  const [fatherName, setFatherName] = useState("");
+  const [courseName, setCourseName] = useState("");
+  const [sessionFrom, setSessionFrom] = useState("");
+  const [sessionTo, setSessionTo] = useState("");
+  const [grade, setGrade] = useState("");
+  const [certificateNumber, setCertificateNumber] = useState("");
+  const [issueDate, setIssueDate] = useState("");
+
+  // State management
+  const [courses, setCourses] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [franchise, setFranchise] = useState(null);
+  const [loadingStudent, setLoadingStudent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
 
-  const [formData, setFormData] = useState({
-    studentName: "",
-    fatherHusbandName: "",
-    motherName: "",
-    enrollmentNumber: "",
-    computerTyping: "",
-    certificateNo: "",
-    dateOfIssue: "",
-  });
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 20 }, (_, i) => currentYear - 10 + i);
 
-  // Get franchise info
+  // Fetch courses on mount
   useEffect(() => {
-    const fetchFranchise = async () => {
+    const fetchCourses = async () => {
       try {
-        const res = await API.get("/franchise-profile/me");
-        setFranchise(res.data?.data || null);
+        const res = await API.get("/franchise/courses");
+        const data = Array.isArray(res.data) ? res.data : [];
+        setCourses(data);
       } catch (err) {
-        console.error("fetchFranchise error:", err);
+        console.error("Failed to fetch courses:", err);
       }
     };
-    fetchFranchise();
+    fetchCourses();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Load existing certificate for edit
+  useEffect(() => {
+    if (!isEditMode || !certificateId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchCertificate = async () => {
+      setLoading(true);
+      try {
+        const res = await API.get(`/franchise/certificates/${certificateId}`);
+        const cert = res.data;
+
+        if (cert) {
+          setName(cert.name || "");
+          setFatherName(cert.fatherName || "");
+          setCourseName(cert.courseName || "");
+          setSessionFrom(cert.sessionFrom ? String(cert.sessionFrom) : "");
+          setSessionTo(cert.sessionTo ? String(cert.sessionTo) : "");
+          setGrade(cert.grade || "");
+          setEnrollmentNumber(cert.enrollmentNumber || "");
+          setCertificateNumber(cert.certificateNumber || "");
+          setIssueDate(cert.issueDate ? cert.issueDate.split("T")[0] : "");
+        }
+      } catch (err) {
+        console.error("Failed to load certificate:", err);
+        setMessageType("danger");
+        setMessage("Failed to load certificate");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCertificate();
+  }, [isEditMode, certificateId]);
+
+  // Lookup student by enrollment number
+  const handleLookupStudent = async () => {
+    if (!enrollmentNumber.trim()) {
+      setMessageType("danger");
+      setMessage("Please enter an enrollment number first.");
+      return;
+    }
+
+    setLoadingStudent(true);
+    setMessage("");
+
+    try {
+      const studentsRes = await API.get("/franchise/students");
+      const students = Array.isArray(studentsRes.data) ? studentsRes.data : [];
+      const student = students.find(
+        (s) =>
+          s.enrollment === enrollmentNumber.trim() ||
+          s.rollNumber === enrollmentNumber.trim()
+      );
+
+      if (student) {
+        setName(student.name || "");
+        setFatherName(student.fatherName || "");
+        setCourseName(student.courseName || "");
+
+        if (student.sessionStart) {
+          const startYear = new Date(student.sessionStart).getFullYear();
+          setSessionFrom(startYear.toString());
+        }
+        if (student.sessionEnd) {
+          const endYear = new Date(student.sessionEnd).getFullYear();
+          setSessionTo(endYear.toString());
+        }
+
+        setMessageType("success");
+        setMessage("Student details loaded successfully!");
+      } else {
+        setMessageType("danger");
+        setMessage("Student not found with this enrollment number.");
+      }
+    } catch (err) {
+      console.error("Student lookup error:", err);
+      setMessageType("danger");
+      setMessage(
+        err.userMessage || "Student not found with this enrollment number."
+      );
+    } finally {
+      setLoadingStudent(false);
+    }
   };
 
-  const validateForm = () => {
-    if (!formData.studentName.trim()) {
-      setError("Student Name is required");
+  const validate = () => {
+    if (!enrollmentNumber.trim()) {
+      setMessageType("danger");
+      setMessage("Enrollment Number is required.");
       return false;
     }
-    if (!formData.fatherHusbandName.trim()) {
-      setError("Father/Husband Name is required");
+    if (!name.trim()) {
+      setMessageType("danger");
+      setMessage("Name is required.");
       return false;
     }
-    if (!formData.motherName.trim()) {
-      setError("Mother Name is required");
+    if (!fatherName.trim()) {
+      setMessageType("danger");
+      setMessage("Father's Name is required.");
       return false;
     }
-    if (!formData.enrollmentNumber.trim()) {
-      setError("Enrollment Number is required");
+    if (!courseName.trim()) {
+      setMessageType("danger");
+      setMessage("Course Name is required.");
       return false;
     }
-    if (!formData.computerTyping.trim()) {
-      setError("Computer Typing is required");
+    if (!sessionFrom) {
+      setMessageType("danger");
+      setMessage("Session From is required.");
       return false;
     }
-    if (!formData.certificateNo.trim()) {
-      setError("Certificate Number is required");
+    if (!sessionTo) {
+      setMessageType("danger");
+      setMessage("Session To is required.");
       return false;
     }
-    if (!formData.dateOfIssue) {
-      setError("Date of Issue is required");
+    if (!grade.trim()) {
+      setMessageType("danger");
+      setMessage("Grade is required.");
+      return false;
+    }
+    if (!certificateNumber.trim()) {
+      setMessageType("danger");
+      setMessage("Certificate Number is required.");
+      return false;
+    }
+    if (!issueDate) {
+      setMessageType("danger");
+      setMessage("Issue Date is required.");
       return false;
     }
     return true;
@@ -159,250 +186,282 @@ export default function FranchiseTypingCertificateCreate() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setMessage("");
 
-    if (!validateForm()) return;
+    if (!validate()) return;
 
     setSaving(true);
-
     try {
-      // Generate certificate image data URL for storing
-      let certificateImage = null;
-      try {
-        await initTypingCertificateGenerator();
-      } catch (genErr) {
-        setError(`Certificate generation failed: ${genErr.message}`);
-        return;
-      }
-
-      if (typingCertificateGenerator) {
-        try {
-          const certificateData = {
-            studentName: formData.studentName.trim(),
-            fatherHusbandName: formData.fatherHusbandName.trim(),
-            motherName: formData.motherName.trim(),
-            enrollmentNumber: formData.enrollmentNumber.trim(),
-            computerTyping: formData.computerTyping.trim(),
-            certificateNo: formData.certificateNo.trim(),
-            dateOfIssue: formData.dateOfIssue,
-          };
-          certificateImage = await typingCertificateGenerator.getDataURL(certificateData);
-        } catch (imgErr) {
-          console.error('Could not generate typing certificate image:', imgErr);
-          setError('Failed to generate certificate image. Please ensure the JPG template is properly configured.');
-          return;
-        }
-      } else {
-        setError('Certificate generator not available. Please refresh the page.');
-        return;
-      }
-
       const payload = {
-        studentName: formData.studentName.trim(),
-        fatherHusbandName: formData.fatherHusbandName.trim(),
-        motherName: formData.motherName.trim(),
-        enrollmentNumber: formData.enrollmentNumber.trim(),
-        computerTyping: formData.computerTyping.trim(),
-        certificateNo: formData.certificateNo.trim(),
-        dateOfIssue: formData.dateOfIssue,
-        certificateImage,
+        name: name.trim(),
+        fatherName: fatherName.trim(),
+        courseName: courseName.trim(),
+        sessionFrom: parseInt(sessionFrom),
+        sessionTo: parseInt(sessionTo),
+        grade: grade.trim(),
+        enrollmentNumber: enrollmentNumber.trim(),
+        certificateNumber: certificateNumber.trim(),
+        issueDate,
+        dob: dob || null,
       };
 
-      await API.post("/franchise/typing-certificates", payload);
+      if (isEditMode && certificateId) {
+        await API.put(`/franchise/certificates/${certificateId}`, payload);
+        setMessageType("success");
+        setMessage("Certificate updated successfully.");
+      } else {
+        await API.post("/franchise/certificates", payload);
+        setMessageType("success");
+        setMessage("Certificate created successfully.");
+      }
 
-      navigate("/franchise/typing-certificates", {
-        state: { message: "Typing certificate created successfully!" },
-      });
+      setTimeout(() => {
+        navigate("/franchise/certificates");
+      }, 1000);
     } catch (err) {
-      console.error("Create typing certificate error:", err);
-      setError(err.response?.data?.message || "Failed to create certificate");
+      console.error("create certificate error:", err);
+      setMessageType("danger");
+      setMessage(
+        err.response?.data?.message ||
+          err.userMessage ||
+          "Failed to save certificate"
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="d-flex">
-      <Sidebar franchise={franchise} />
-
-      <div
-        className="flex-grow-1 bg-light min-vh-100"
-        style={{ marginLeft: "260px" }}
-      >
-        <div className="container-fluid p-4">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h2 className="mb-1">Create Typing Certificate</h2>
-              <p className="text-muted mb-0">Generate certificate for computer typing training completion</p>
-            </div>
-            <button
-              className="btn btn-outline-secondary"
-              onClick={() => navigate("/franchise/typing-certificates")}
-            >
-              <i className="bi bi-arrow-left me-1"></i>
-              Back to List
-            </button>
-          </div>
-
-          <div className="row justify-content-center">
-            <div className="col-lg-8">
-              <div className="card shadow-sm">
-                <div className="card-body p-4">
-                  {error && (
-                    <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                      <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                      {error}
-                      <button
-                        type="button"
-                        className="btn-close"
-                        onClick={() => setError("")}
-                        aria-label="Close"
-                      ></button>
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSubmit}>
-                    <div className="row g-3">
-                      <div className="col-md-6">
-                        <label className="form-label">
-                          Student Name <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="studentName"
-                          value={formData.studentName}
-                          onChange={handleInputChange}
-                          placeholder="Enter student full name"
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="form-label">
-                          Father/Husband Name <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="fatherHusbandName"
-                          value={formData.fatherHusbandName}
-                          onChange={handleInputChange}
-                          placeholder="Enter father or husband name"
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="form-label">
-                          Mother Name <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="motherName"
-                          value={formData.motherName}
-                          onChange={handleInputChange}
-                          placeholder="Enter mother name"
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="form-label">
-                          Enrollment Number <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="enrollmentNumber"
-                          value={formData.enrollmentNumber}
-                          onChange={handleInputChange}
-                          placeholder="Enter enrollment number"
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="form-label">
-                          Computer Typing <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="computerTyping"
-                          value={formData.computerTyping}
-                          onChange={handleInputChange}
-                          placeholder="e.g., English/Hindi Typing"
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="form-label">
-                          Certificate Number <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="certificateNo"
-                          value={formData.certificateNo}
-                          onChange={handleInputChange}
-                          placeholder="Enter certificate number"
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="form-label">
-                          Date of Issue <span className="text-danger">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          className="form-control"
-                          name="dateOfIssue"
-                          value={formData.dateOfIssue}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-
-                      <div className="col-12 mt-4">
-                        <button
-                          type="submit"
-                          className="btn btn-primary w-100"
-                          disabled={saving}
-                        >
-                          {saving ? (
-                            <>
-                              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                              Creating Certificate...
-                            </>
-                          ) : (
-                            <>
-                              <i className="bi bi-plus-circle me-2"></i>
-                              Create Typing Certificate
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <div className="alert alert-info mt-4" role="alert">
-                <i className="bi bi-info-circle-fill me-2"></i>
-                <strong>Note:</strong> Make sure all JPG template files are uploaded to the server before creating certificates.
-                The system requires <code>typing-certificate-template.jpeg</code> to generate certificates.
-              </div>
-            </div>
-          </div>
+  // FIX: replaced broken loading spinner (used undefined Sidebar/franchise) with FranchiseLayout
+  if (loading) {
+    return (
+      <FranchiseLayout>
+        <div className="d-flex justify-content-center align-items-center py-5">
+          <div className="spinner-border text-primary me-2" />
+          Loading…
         </div>
+      </FranchiseLayout>
+    );
+  }
+
+  return (
+    <FranchiseLayout>
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h2 className="fw-bold mb-1">
+            {isEditMode ? "Edit Certificate" : "Create Certificate"}
+          </h2>
+          <small className="text-muted">
+            {isEditMode
+              ? "Update certificate details."
+              : "Creating a certificate will deduct credits from your account."}
+          </small>
+        </div>
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => navigate("/franchise/certificates")}
+          disabled={saving}
+        >
+          Back to Certificates
+        </button>
       </div>
 
-      {/* Hidden canvas for typing certificate rendering */}
-      <canvas id="typingCertCanvas" style={{ display: 'none' }}></canvas>
-    </div>
+      {message && (
+        <div className={`alert alert-${messageType}`} role="alert">
+          {message}
+        </div>
+      )}
+
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <form onSubmit={handleSubmit} className="row g-3">
+            {/* Enrollment Number */}
+            <div className="col-md-6">
+              <label className="form-label">
+                Enrollment Number{" "}
+                {!isEditMode && <span className="text-danger">*</span>}
+              </label>
+              <div className="input-group">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={enrollmentNumber}
+                  onChange={(e) => setEnrollmentNumber(e.target.value)}
+                  placeholder="Enter enrollment number"
+                  disabled={isEditMode}
+                  required={!isEditMode}
+                />
+                {!isEditMode && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    onClick={handleLookupStudent}
+                    disabled={loadingStudent}
+                  >
+                    {loadingStudent ? "Looking up..." : "Lookup"}
+                  </button>
+                )}
+              </div>
+              <small className="text-muted">
+                Enter enrollment number and click Lookup to auto-fill student
+                details
+              </small>
+            </div>
+
+            {/* Date of Birth */}
+            <div className="col-md-6">
+              <label className="form-label">
+                Date of Birth <span className="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                required
+              />
+              <small className="text-muted">Required for public verification</small>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label">
+                Name <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label">
+                Father's Name <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={fatherName}
+                onChange={(e) => setFatherName(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Course Name */}
+            <div className="col-md-6">
+              <label className="form-label">
+                Course Name <span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                required
+              >
+                <option value="">Select Course</option>
+                {courses.map((course) => (
+                  <option key={course._id} value={course.title || course.name}>
+                    {course.title || course.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-md-3">
+              <label className="form-label">
+                Session From <span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={sessionFrom}
+                onChange={(e) => setSessionFrom(e.target.value)}
+                required
+              >
+                <option value="">Select Year</option>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-md-3">
+              <label className="form-label">
+                Session To <span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={sessionTo}
+                onChange={(e) => setSessionTo(e.target.value)}
+                required
+              >
+                <option value="">Select Year</option>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label">
+                Grade <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                placeholder="e.g., A, A+, First Division"
+                required
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label">
+                Certificate Number <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={certificateNumber}
+                onChange={(e) => setCertificateNumber(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label">
+                Issue Date <span className="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                value={issueDate}
+                onChange={(e) => setIssueDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="col-12">
+              <button
+                type="submit"
+                className="btn btn-primary w-100"
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving…"
+                  : isEditMode
+                  ? "Update Certificate"
+                  : "Create Certificate"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </FranchiseLayout>
   );
 }

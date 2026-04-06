@@ -13,17 +13,19 @@ import FranchiseProfile from "./pages/FranchiseProfile";
 import FranchiseCredits from "./pages/FranchiseCredits";
 import FranchiseDashboard from "./pages/FranchiseDashboard";
 import FranchiseAddStudent from "./pages/FranchiseAddStudent";
+import FranchiseViewStudent from "./pages/FranchiseViewStudent";
 import FranchiseStudents from "./pages/FranchiseStudents";
 import FranchiseCourses from "./pages/FranchiseCourses";
 import FranchiseCreateCourse from "./pages/FranchiseCreateCourse";
 import FranchiseSubjectList from "./pages/FranchiseSubjectList";
 import FranchiseCreateSubject from "./pages/FranchiseCreateSubject";
 import FranchiseResultsList from "./pages/FranchiseResultsList";
+import FranchiseViewResult from "./pages/FranchiseViewResult";
 import FranchiseAddResults from "./pages/FranchiseAddResults";
 import FranchiseCertificateList from "./pages/FranchiseCertificateList";
+import FranchiseViewCertificate from "./pages/FranchiseViewCertificate";
 import FranchiseCertificateCreate from "./pages/FranchiseCertificateCreate";
-import FranchiseFranchiseCertificateList from "./pages/FranchiseFranchiseCertificateList";
-import FranchiseFranchiseCertificateCreate from "./pages/FranchiseFranchiseCertificateCreate";
+
 import FranchiseTypingCertificateList from "./pages/FranchiseTypingCertificateList";
 import FranchiseTypingCertificateCreate from "./pages/FranchiseTypingCertificateCreate";
 import FranchiseProtectedRoute from "./components/FranchiseProtectedRoute";
@@ -209,6 +211,15 @@ export default function App() {
 />
 
 <Route
+  path="/franchise/students/view/:id"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseViewStudent />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
   path="/franchise/students"
   element={
     <FranchiseProtectedRoute>
@@ -272,6 +283,15 @@ export default function App() {
 />
 
 <Route
+  path="/franchise/results/view/:id"
+  element={
+    <FranchiseProtectedRoute>
+      <FranchiseViewResult />
+    </FranchiseProtectedRoute>
+  }
+/>
+
+<Route
   path="/franchise/results/add"
   element={
     <FranchiseProtectedRoute>
@@ -299,22 +319,15 @@ export default function App() {
 />
 
 <Route
-  path="/franchise/franchise-certificates"
+  path="/franchise/certificates/view/:id"
   element={
     <FranchiseProtectedRoute>
-      <FranchiseFranchiseCertificateList />
+      <FranchiseViewCertificate />
     </FranchiseProtectedRoute>
   }
 />
 
-<Route
-  path="/franchise/franchise-certificates/create"
-  element={
-    <FranchiseProtectedRoute>
-      <FranchiseFranchiseCertificateCreate />
-    </FranchiseProtectedRoute>
-  }
-/>
+
 
 <Route
   path="/franchise/typing-certificates"

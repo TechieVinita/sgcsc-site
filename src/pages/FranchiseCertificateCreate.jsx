@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
-import Sidebar from "./FranchiseDashboard";
+import { FranchiseLayout } from "./FranchiseStudents";
 
 export default function FranchiseCertificateCreate() {
   const navigate = useNavigate();
@@ -30,23 +30,9 @@ export default function FranchiseCertificateCreate() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
-  const [franchise, setFranchise] = useState(null);
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 20 }, (_, i) => currentYear - 10 + i);
-
-  // Get franchise info
-  useEffect(() => {
-    const fetchFranchise = async () => {
-      try {
-        const res = await API.get("/franchise-profile/me");
-        setFranchise(res.data?.data || null);
-      } catch (err) {
-        console.error("fetchFranchise error:", err);
-      }
-    };
-    fetchFranchise();
-  }, []);
 
   // Fetch courses on mount
   useEffect(() => {
@@ -110,20 +96,19 @@ export default function FranchiseCertificateCreate() {
     setMessage("");
 
     try {
-      // Try to find student in franchise's students
       const studentsRes = await API.get("/franchise/students");
       const students = Array.isArray(studentsRes.data) ? studentsRes.data : [];
       const student = students.find(
-        (s) => s.enrollment === enrollmentNumber.trim() || s.rollNumber === enrollmentNumber.trim()
+        (s) =>
+          s.enrollment === enrollmentNumber.trim() ||
+          s.rollNumber === enrollmentNumber.trim()
       );
 
       if (student) {
-        // Auto-fill student details
         setName(student.name || "");
         setFatherName(student.fatherName || "");
         setCourseName(student.courseName || "");
 
-        // Set session years if available
         if (student.sessionStart) {
           const startYear = new Date(student.sessionStart).getFullYear();
           setSessionFrom(startYear.toString());
@@ -142,7 +127,9 @@ export default function FranchiseCertificateCreate() {
     } catch (err) {
       console.error("Student lookup error:", err);
       setMessageType("danger");
-      setMessage(err.userMessage || "Student not found with this enrollment number.");
+      setMessage(
+        err.userMessage || "Student not found with this enrollment number."
+      );
     } finally {
       setLoadingStudent(false);
     }
@@ -234,251 +221,247 @@ export default function FranchiseCertificateCreate() {
     } catch (err) {
       console.error("create certificate error:", err);
       setMessageType("danger");
-      setMessage(err.response?.data?.message || err.userMessage || "Failed to save certificate");
+      setMessage(
+        err.response?.data?.message ||
+          err.userMessage ||
+          "Failed to save certificate"
+      );
     } finally {
       setSaving(false);
     }
   };
 
+  // FIX: replaced broken loading spinner (used undefined Sidebar/franchise) with FranchiseLayout
   if (loading) {
     return (
-      <div className="d-flex">
-        <Sidebar franchise={franchise} />
-        <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
-          <div className="d-flex justify-content-center align-items-center py-5">
-            <div className="spinner-border text-primary me-2" />
-            Loading…
-          </div>
+      <FranchiseLayout>
+        <div className="d-flex justify-content-center align-items-center py-5">
+          <div className="spinner-border text-primary me-2" />
+          Loading…
         </div>
-      </div>
+      </FranchiseLayout>
     );
   }
 
   return (
-    <div className="d-flex">
-      <Sidebar franchise={franchise} />
-      <div className="flex-grow-1 p-4" style={{ marginLeft: "260px" }}>
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-          <div>
-            <h2 className="fw-bold mb-1">
-              {isEditMode ? "Edit Certificate" : "Create Certificate"}
-            </h2>
-            <small className="text-muted">
-              {isEditMode
-                ? "Update certificate details."
-                : "Creating a certificate will deduct credits from your account."}
-            </small>
-          </div>
-          <button
-            className="btn btn-outline-secondary"
-            onClick={() => navigate("/franchise/certificates")}
-            disabled={saving}
-          >
-            Back to Certificates
-          </button>
+    <FranchiseLayout>
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h2 className="fw-bold mb-1">
+            {isEditMode ? "Edit Certificate" : "Create Certificate"}
+          </h2>
+          <small className="text-muted">
+            {isEditMode
+              ? "Update certificate details."
+              : "Creating a certificate will deduct credits from your account."}
+          </small>
         </div>
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => navigate("/franchise/certificates")}
+          disabled={saving}
+        >
+          Back to Certificates
+        </button>
+      </div>
 
-        {message && (
-          <div className={`alert alert-${messageType}`} role="alert">
-            {message}
-          </div>
-        )}
+      {message && (
+        <div className={`alert alert-${messageType}`} role="alert">
+          {message}
+        </div>
+      )}
 
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <form onSubmit={handleSubmit} className="row g-3">
-              {/* Enrollment Number - First field with Lookup button */}
-              <div className="col-md-6">
-                <label className="form-label">
-                  Enrollment Number{" "}
-                  {!isEditMode && <span className="text-danger">*</span>}
-                </label>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={enrollmentNumber}
-                    onChange={(e) => setEnrollmentNumber(e.target.value)}
-                    placeholder="Enter enrollment number"
-                    disabled={isEditMode}
-                    required={!isEditMode}
-                  />
-                  {!isEditMode && (
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary"
-                      onClick={handleLookupStudent}
-                      disabled={loadingStudent}
-                    >
-                      {loadingStudent ? "Looking up..." : "Lookup"}
-                    </button>
-                  )}
-                </div>
-                <small className="text-muted">
-                  Enter enrollment number and click Lookup to auto-fill student
-                  details
-                </small>
-              </div>
-
-              {/* Date of Birth */}
-              <div className="col-md-6">
-                <label className="form-label">
-                  Date of Birth{" "}
-                  <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  required
-                />
-                <small className="text-muted">
-                  Required for public verification
-                </small>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label">
-                  Name <span className="text-danger">*</span>
-                </label>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <form onSubmit={handleSubmit} className="row g-3">
+            {/* Enrollment Number */}
+            <div className="col-md-6">
+              <label className="form-label">
+                Enrollment Number{" "}
+                {!isEditMode && <span className="text-danger">*</span>}
+              </label>
+              <div className="input-group">
                 <input
                   type="text"
                   className="form-control"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
+                  value={enrollmentNumber}
+                  onChange={(e) => setEnrollmentNumber(e.target.value)}
+                  placeholder="Enter enrollment number"
+                  disabled={isEditMode}
+                  required={!isEditMode}
                 />
+                {!isEditMode && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    onClick={handleLookupStudent}
+                    disabled={loadingStudent}
+                  >
+                    {loadingStudent ? "Looking up..." : "Lookup"}
+                  </button>
+                )}
               </div>
+              <small className="text-muted">
+                Enter enrollment number and click Lookup to auto-fill student
+                details
+              </small>
+            </div>
 
-              <div className="col-md-6">
-                <label className="form-label">
-                  Father's Name <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={fatherName}
-                  onChange={(e) => setFatherName(e.target.value)}
-                  required
-                />
-              </div>
+            {/* Date of Birth */}
+            <div className="col-md-6">
+              <label className="form-label">
+                Date of Birth <span className="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                required
+              />
+              <small className="text-muted">Required for public verification</small>
+            </div>
 
-              {/* Course Name - Dropdown */}
-              <div className="col-md-6">
-                <label className="form-label">
-                  Course Name <span className="text-danger">*</span>
-                </label>
-                <select
-                  className="form-select"
-                  value={courseName}
-                  onChange={(e) => setCourseName(e.target.value)}
-                  required
-                >
-                  <option value="">Select Course</option>
-                  {courses.map((course) => (
-                    <option key={course._id} value={course.title || course.name}>
-                      {course.title || course.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="col-md-6">
+              <label className="form-label">
+                Name <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
 
-              <div className="col-md-3">
-                <label className="form-label">
-                  Session From <span className="text-danger">*</span>
-                </label>
-                <select
-                  className="form-select"
-                  value={sessionFrom}
-                  onChange={(e) => setSessionFrom(e.target.value)}
-                  required
-                >
-                  <option value="">Select Year</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="col-md-6">
+              <label className="form-label">
+                Father's Name <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={fatherName}
+                onChange={(e) => setFatherName(e.target.value)}
+                required
+              />
+            </div>
 
-              <div className="col-md-3">
-                <label className="form-label">
-                  Session To <span className="text-danger">*</span>
-                </label>
-                <select
-                  className="form-select"
-                  value={sessionTo}
-                  onChange={(e) => setSessionTo(e.target.value)}
-                  required
-                >
-                  <option value="">Select Year</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Course Name */}
+            <div className="col-md-6">
+              <label className="form-label">
+                Course Name <span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                required
+              >
+                <option value="">Select Course</option>
+                {courses.map((course) => (
+                  <option key={course._id} value={course.title || course.name}>
+                    {course.title || course.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="col-md-6">
-                <label className="form-label">
-                  Grade <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
-                  placeholder="e.g., A, A+, First Division"
-                  required
-                />
-              </div>
+            <div className="col-md-3">
+              <label className="form-label">
+                Session From <span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={sessionFrom}
+                onChange={(e) => setSessionFrom(e.target.value)}
+                required
+              >
+                <option value="">Select Year</option>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="col-md-6">
-                <label className="form-label">
-                  Certificate Number <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={certificateNumber}
-                  onChange={(e) => setCertificateNumber(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="col-md-3">
+              <label className="form-label">
+                Session To <span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={sessionTo}
+                onChange={(e) => setSessionTo(e.target.value)}
+                required
+              >
+                <option value="">Select Year</option>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="col-md-6">
-                <label className="form-label">
-                  Issue Date <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="col-md-6">
+              <label className="form-label">
+                Grade <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                placeholder="e.g., A, A+, First Division"
+                required
+              />
+            </div>
 
-              <div className="col-12">
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100"
-                  disabled={saving}
-                >
-                  {saving
-                    ? "Saving…"
-                    : isEditMode
-                    ? "Update Certificate"
-                    : "Create Certificate"}
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="col-md-6">
+              <label className="form-label">
+                Certificate Number <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                value={certificateNumber}
+                onChange={(e) => setCertificateNumber(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label">
+                Issue Date <span className="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                value={issueDate}
+                onChange={(e) => setIssueDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="col-12">
+              <button
+                type="submit"
+                className="btn btn-primary w-100"
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving…"
+                  : isEditMode
+                  ? "Update Certificate"
+                  : "Create Certificate"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-    </div>
+    </FranchiseLayout>
   );
 }
