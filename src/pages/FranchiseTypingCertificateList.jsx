@@ -22,6 +22,7 @@ const initTypingCertificateGenerator = async () => {
       await typingCertificateGenerator.loadTemplate(
         "/typing-certificate-template.jpeg"
       );
+      typingCertificateGenerator.fetchConfigFromAPI();
       return typingCertificateGenerator;
     } catch (err) {
       throw new Error(`Template required: ${err.message}`);
@@ -43,6 +44,7 @@ const initTypingCertificateGenerator = async () => {
               await typingCertificateGenerator.loadTemplate(
                 "/typing-certificate-template.jpeg"
               );
+              typingCertificateGenerator.fetchConfigFromAPI();
               resolve(typingCertificateGenerator);
             } catch (err) {
               reject(new Error(`Template required: ${err.message}`));
@@ -72,6 +74,7 @@ const initTypingCertificateGenerator = async () => {
             await typingCertificateGenerator.loadTemplate(
               "/typing-certificate-template.jpeg"
             );
+            typingCertificateGenerator.fetchConfigFromAPI();
             resolve(typingCertificateGenerator);
           } catch (err) {
             reject(new Error(`Template required: ${err.message}`));

@@ -35,6 +35,11 @@ export const getSettings = async () => {
   return res.data?.data || null;
 };
 
+export const getCertificateTemplateConfig = async () => {
+  const res = await API.get("/settings/certificate-template");
+  return res.data?.data || null;
+};
+
 /* ===== CREDITS (Franchise) ===== */
 
 export const getMyCredits = async () => {

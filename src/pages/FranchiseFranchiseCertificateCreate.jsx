@@ -24,6 +24,7 @@ const initFranchiseCertificateGenerator = async () => {
     franchiseCertificateGenerator = window.FranchiseCertificateGenerator;
     try {
       await franchiseCertificateGenerator.loadTemplate('/franchise-certificate-template.jpeg');
+      franchiseCertificateGenerator.fetchConfigFromAPI();
       console.log('Franchise certificate template loaded successfully');
       return franchiseCertificateGenerator;
     } catch (err) {
@@ -48,6 +49,7 @@ const initFranchiseCertificateGenerator = async () => {
             franchiseCertificateGenerator = window.FranchiseCertificateGenerator;
             try {
               await franchiseCertificateGenerator.loadTemplate('/franchise-certificate-template.jpeg');
+              franchiseCertificateGenerator.fetchConfigFromAPI();
               console.log('Franchise certificate template loaded successfully');
               resolve(franchiseCertificateGenerator);
             } catch (err) {
@@ -72,6 +74,7 @@ const initFranchiseCertificateGenerator = async () => {
           franchiseCertificateGenerator = window.FranchiseCertificateGenerator;
           try {
             await franchiseCertificateGenerator.loadTemplate('/franchise-certificate-template.jpeg');
+            franchiseCertificateGenerator.fetchConfigFromAPI();
             console.log('Franchise certificate template loaded successfully');
             resolve(franchiseCertificateGenerator);
           } catch (err) {
