@@ -4,7 +4,7 @@ import API from "../api/axiosInstance";
 import { jsPDF } from "jspdf";
 
 export default function StudentCertificateVerification() {
-  const [enrollmentNumber, setEnrollmentNumber] = useState("");
+  const [rollNumber, setRollNumber] = useState("");
   const [dob, setDob] = useState("");
   const [certificate, setCertificate] = useState(null);
   const [error, setError] = useState("");
@@ -46,15 +46,15 @@ export default function StudentCertificateVerification() {
     setLoading(true);
 
     try {
-      const res = await API.post("/public/certificate", {
-        enrollmentNumber,
+      const res = await API.post("/public/verify/certificate", {
+        rollNumber,
         dob,
       });
       // Handle both single certificate and array of certificates
       const data = res.data.data;
       setCertificate(Array.isArray(data) ? data : [data]);
     } catch {
-      setError("Certificate not found. Please check your enrollment number and date of birth.");
+      setError("Certificate not found. Please check your roll number and date of birth.");
     } finally {
       setLoading(false);
     }
@@ -335,17 +335,17 @@ export default function StudentCertificateVerification() {
     <div className="container my-5">
       <h2 className="text-center mb-4">Certificate Verification</h2>
       <p className="text-center text-muted mb-4">
-        Enter your enrollment number and date of birth to verify and download your certificate
+        Enter your roll number and date of birth to verify and download your certificate
       </p>
 
       <form onSubmit={handleSubmit} className="card p-4 mx-auto" style={{ maxWidth: 500 }}>
         <div className="mb-3">
-          <label className="form-label">Enrollment Number</label>
-          <input 
-            className="form-control" 
-            placeholder="Enter your enrollment number"
-            value={enrollmentNumber} 
-            onChange={(e) => setEnrollmentNumber(e.target.value)}
+          <label className="form-label">Roll Number</label>
+          <input
+            className="form-control"
+            placeholder="Enter your roll number"
+            value={rollNumber}
+            onChange={(e) => setRollNumber(e.target.value)}
             required
           />
         </div>
