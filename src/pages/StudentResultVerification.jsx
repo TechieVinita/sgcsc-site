@@ -5,7 +5,6 @@ import { jsPDF } from "jspdf";
 
 export default function StudentResultVerification() {
   const [rollNumber, setRollNumber] = useState("");
-  const [dob, setDob] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,12 +45,12 @@ export default function StudentResultVerification() {
     setLoading(true);
 
     try {
-      const res = await API.post("/public/verify/result", { rollNumber, dob });
+      const res = await API.post("/public/verify/result", { rollNumber });
       // Handle both single result and array of results
       const data = res.data.data;
       setResult(Array.isArray(data) ? data : [data]);
     } catch {
-      setError("Result not found. Please check your roll number and date of birth.");
+      setError("Result not found. Please check your roll number.");
     } finally {
       setLoading(false);
     }
@@ -500,7 +499,7 @@ export default function StudentResultVerification() {
     <div className="container my-5">
       <h2 className="text-center mb-4">Result Verification</h2>
       <p className="text-center text-muted mb-4">
-        Enter your roll number and date of birth to verify and download your result
+        Enter your roll number to verify and download your result
       </p>
 
       <form onSubmit={handleSubmit} className="card p-4 mx-auto" style={{ maxWidth: 500 }}>
