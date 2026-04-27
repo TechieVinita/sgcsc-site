@@ -513,16 +513,6 @@ export default function StudentResultVerification() {
             required
           />
         </div>
-        <div className="mb-3">
-          <label className="form-label">Date of Birth</label>
-          <input 
-            type="date" 
-            className="form-control"
-            value={dob} 
-            onChange={(e) => setDob(e.target.value)}
-            required
-          />
-        </div>
         <button className="btn btn-primary w-100" disabled={loading}>
           {loading ? "Verifying..." : "Verify & Download"}
         </button>
